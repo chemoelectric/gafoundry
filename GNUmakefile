@@ -22,9 +22,17 @@
 .DELETE_ON_ERROR:
 .DEFAULT_GOAL := default
 
+PACKAGE = gafoundry
+VERSION = 1.0.0
+
 CALM1 = calm1
 CALM1_R7RS = $(CALM1) --comment-style=r7rs
-CALM1_FLAGS =
+CALM1_FLAGS = \
+	-D'PACKAGE=$(PACKAGE)' \
+	-D'VERSION=$(VERSION)'
+
+CHICKEN_INSTALL = chicken-install
+CHICKEN_UNINSTALL = chicken-uninstall
 
 .PHONY: default all clean maintainer-clean
 default: all
@@ -32,16 +40,41 @@ default: all
 %.sld: %.sld.calm1
 	$(CALM1_R7RS) $(CALM1_FLAGS) $(<) -o $(@)
 
-gafoundry/xml-parse.sld: gafoundry/replacements-for-slib.scm
-gafoundry/xml-parse.sld: gafoundry/alist.scm
-gafoundry/xml-parse.sld: gafoundry/strsrch.scm
-gafoundry/xml-parse.sld: gafoundry/xml-parse.scm
-all:: gafoundry/xml-parse.sld
-maintainer-clean:: ; -rm -f gafoundry/xml-parse.sld
+all:: gafoundry.egg
+gafoundry.egg: gafoundry.egg.calm1
+	$(CALM1) $(CALM1_FLAGS) $(<) -o $(@)
 
-gafoundry/prec.sld: gafoundry/replacements-for-slib.scm
-gafoundry/prec.sld: gafoundry/alist.scm
-gafoundry/prec.sld: gafoundry/strsrch.scm
-gafoundry/prec.sld: gafoundry/prec.scm
-all:: gafoundry/prec.sld
-maintainer-clean:: ; -rm -f gafoundry/prec.sld
+gafoundry-lib/version.sld: GNUmakefile
+all:: gafoundry-lib/version.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/version.sld
+
+gafoundry-lib/xml-parse.sld: gafoundry-lib/replacements-for-slib.scm
+gafoundry-lib/xml-parse.sld: gafoundry-lib/alist.scm
+gafoundry-lib/xml-parse.sld: gafoundry-lib/strsrch.scm
+gafoundry-lib/xml-parse.sld: gafoundry-lib/xml-parse.scm
+all:: gafoundry-lib/xml-parse.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/xml-parse.sld
+
+gafoundry-lib/prec.sld: gafoundry-lib/replacements-for-slib.scm
+gafoundry-lib/prec.sld: gafoundry-lib/alist.scm
+gafoundry-lib/prec.sld: gafoundry-lib/strsrch.scm
+gafoundry-lib/prec.sld: gafoundry-lib/prec.scm
+all:: gafoundry-lib/prec.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/prec.sld
+
+.PHONY: install
+install::
+	$(CHICKEN_INSTALL) -s
+
+.PHONY: uninstall
+uninstall::
+	$(CHICKEN_UNINSTALL) -s -force gafoundry
+
+.PHONY: test install-check
+test install-check::
+	$(CHICKEN_INSTALL) -s -test
+
+clean::
+	-rm -f gafoundry.build.sh
+	-rm -f gafoundry.install.sh
+	-rm -f gafoundry-lib.*.{c,o,so,link,import.scm}

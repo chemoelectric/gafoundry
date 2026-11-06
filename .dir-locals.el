@@ -2,6 +2,10 @@
                            '("\\.s\\(ld\\|cm\\)\\'" . scheme-mode)))
       (eval . (add-to-list 'auto-mode-alist
                            '("\\.s\\(ld\\|cm\\)\\.calm1\\'" . scheme-mode)))
+      (eval . (add-to-list 'auto-mode-alist
+                           '("\\.egg\\'" . scheme-mode)))
+      (eval . (add-to-list 'auto-mode-alist
+                           '("\\.egg\\.calm1\\'" . scheme-mode)))
       (indent-tabs-mode . nil))
  (makefile-mode (indent-tabs-mode . t)
                 (tab-width . 4))

@@ -19,23 +19,8 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (gafoundry prec)
+(import (scheme base)
+        (scheme process-context)
+        (gafoundry g25spec2gaspec))
 
-  (import (scheme base)
-          (scheme char)
-          (scheme write)
-          (scheme lazy)
-          (scheme cxr)
-          (srfi 1))
-
-  (begin
-
-    (@ include-raw "gafoundry/replacements-for-slib.scm")
-
-    (@ include-raw
-       "sed 's/^\x28;require /;;;\x28;require /' \
-        gafoundry/alist.scm \
-        gafoundry/strsrch.scm \
-        gafoundry/prec.scm|")
-
-    ))
+(g25spec2gaspec (command-line))

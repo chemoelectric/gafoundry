@@ -19,7 +19,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (gafoundry xml-parse)
+(define-library (gafoundry-lib xml-parse)
 
   (import (scheme base)
           (scheme char)

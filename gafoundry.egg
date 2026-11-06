@@ -1,0 +1,18 @@
+((author "Barry Schwartz")
+ (synopsis "gafoundry: tools for generating implementations of geometric algebras")
+ (version "1.0.0")
+ (license "MIT")
+ (category math)
+ (dependencies (chicken "6.0.0")
+               srfi-1)
+ (test-dependencies scsh-process test)
+ (components
+  (extension gafoundry-lib.version
+             (source "gafoundry-lib/version.sld"))
+  (extension gafoundry-lib.xml-parse
+             (source "gafoundry-lib/xml-parse.sld"))
+  (extension gafoundry-lib.xfprec
+             (source "gafoundry-lib/prec.sld"))
+  ))
+
+

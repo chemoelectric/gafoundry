@@ -19,27 +19,41 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (gafoundry xml-parse)
+(define-library (gafoundry-lib prec)
 
   (import (scheme base)
           (scheme char)
           (scheme write)
+          (scheme lazy)
           (scheme cxr)
           (srfi 1))
 
-  (export ssax:xml->sxml
-          ssax:make-parser
-          xml-token-kind
-          xml-token-head)
+  (export tok:char-group
+          tok:decimal-digits
+          tok:upper-case
+          tok:lower-case
+          tok:whitespaces
+          prec:make-nud
+          prec:make-led
+          prec:delim
+          prec:nofix
+          prec:prefix
+          prec:infix
+          prec:nary
+          prec:postfix
+          prec:prestfix
+          prec:commentfix
+          prec:matchfix
+          prec:inmatchfix)
 
   (begin
 
-    (@ include-raw "gafoundry/replacements-for-slib.scm")
+    (@ include-raw "gafoundry-lib/replacements-for-slib.scm")
 
     (@ include-raw
        "sed 's/^\x28;require /;;;\x28;require /' \
-        gafoundry/alist.scm \
-        gafoundry/strsrch.scm \
-        gafoundry/xml-parse.scm|")
+        gafoundry-lib/alist.scm \
+        gafoundry-lib/strsrch.scm \
+        gafoundry-lib/prec.scm|")
 
     ))

@@ -5,4 +5,4 @@
 ^salmonella.log$
 
 ^.+\.(build|install)\.sh$
-^gafoundry\..*\.(c|o|so|link|import.scm)$
+^gafoundry-lib\..*\.(c|o|so|link|import.scm)$

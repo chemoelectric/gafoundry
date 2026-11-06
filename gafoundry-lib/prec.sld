@@ -19,7 +19,7 @@
 ;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ;; SOFTWARE.
 
-(define-library (gafoundry prec)
+(define-library (gafoundry-lib prec)
 
   (import (scheme base)
           (scheme char)
@@ -27,6 +27,24 @@
           (scheme lazy)
           (scheme cxr)
           (srfi 1))
+
+  (export tok:char-group
+          tok:decimal-digits
+          tok:upper-case
+          tok:lower-case
+          tok:whitespaces
+          prec:make-nud
+          prec:make-led
+          prec:delim
+          prec:nofix
+          prec:prefix
+          prec:infix
+          prec:nary
+          prec:postfix
+          prec:prestfix
+          prec:commentfix
+          prec:matchfix
+          prec:inmatchfix)
 
   (begin
 
