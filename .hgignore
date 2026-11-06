@@ -1,0 +1,8 @@
+.*~$
+.*\.orig$
+
+^README\.html$
+^salmonella.log$
+
+^.+\.(build|install)\.sh$
+^gafoundry\..*\.(c|o|so|link|import.scm)$
