@@ -27,7 +27,10 @@
           (scheme cxr)
           (srfi 1))
 
-  (export ssax:xml->sxml)
+  (export ssax:xml->sxml
+          ssax:make-parser
+          xml-token-kind
+          xml-token-head)
 
   (begin
 
