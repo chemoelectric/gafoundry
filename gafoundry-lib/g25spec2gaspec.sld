@@ -23,6 +23,11 @@
 
   (import (scheme base))
 
+  (export g25spec2gaspec)
+
   (begin
+
+    (define (g25spec2gaspec args)
+      'FIXME)
 
     ))

@@ -48,6 +48,10 @@ gafoundry-lib/version.sld: GNUmakefile
 all:: gafoundry-lib/version.sld
 maintainer-clean:: ; -rm -f gafoundry-lib/version.sld
 
+gafoundry-lib/format.sld: gafoundry-lib/format.scm
+all:: gafoundry-lib/format.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/format.sld
+
 gafoundry-lib/xml-parse.sld: gafoundry-lib/replacements-for-slib.scm
 gafoundry-lib/xml-parse.sld: gafoundry-lib/alist.scm
 gafoundry-lib/xml-parse.sld: gafoundry-lib/strsrch.scm

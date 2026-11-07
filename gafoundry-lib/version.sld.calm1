@@ -27,12 +27,12 @@
 
   (import (scheme base))
 
-  (export project
+  (export package
           version)
 
   (begin
 
-    (define project "(@ PROJECT)")
+    (define package "(@ PACKAGE)")
     (define version "(@ VERSION)")
 
     ))

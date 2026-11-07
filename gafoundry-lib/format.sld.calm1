@@ -1,0 +1,84 @@
+;; Copyright © 2026 Barry Schwartz
+;;
+;; Permission is hereby granted, free of charge, to any person
+;; obtaining a copy of this software and associated documentation
+;; files (the "Software"), to deal in the Software without
+;; restriction, including without limitation the rights to use, copy,
+;; modify, merge, publish, distribute, sublicense, and/or sell copies
+;; of the Software, and to permit persons to whom the Software is
+;; furnished to do so, subject to the following conditions: The above
+;; copyright notice and this permission notice shall be included in
+;; all copies or substantial portions of the Software.
+;;
+;; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+;; EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+;; MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+;; NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+;; BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+;; ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+;; CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+;; SOFTWARE.
+
+(define-library (gafoundry-lib format)
+
+  (import (scheme base)
+          (scheme case-lambda)
+          (scheme char)
+          (scheme write)
+          (scheme inexact)
+          (scheme complex)
+          (scheme cxr)
+          (srfi 1))
+  (cond-expand
+    (chibi (import (chibi show)
+                   (chibi show pretty)))
+    (chicken (import (chicken pretty-print)))
+    (gauche (import (gauche base)
+                    (gauche keyword)))
+    (sagittarius (import (pp)))
+    (else))
+
+  (export format)
+
+  (begin
+
+    (@ include-raw "gafoundry-lib/replacements-for-slib.scm")
+
+    (define (provided? symb)
+      (cond
+        ((eq? symb 'real) #t)
+        ((eq? symb 'inexact) #t)
+        ((eq? symb 'complex) #t)))
+
+    (define force-output flush-output-port)
+
+    (cond-expand
+      (chibi
+       (define pretty-print
+         (case-lambda
+           ((obj) 
+            (show (current-output-port) (pretty obj)))
+           ((obj port) 
+            (show port (pretty obj))))))
+      (gauche
+       (define pretty-print
+         (case-lambda
+           ((obj) (pprint obj))
+           ((obj port) (pprint obj :port port)))))
+      (sagittarius pretty-print pp)
+      (else pretty-print write))
+
+    (@ dnl)
+    (@ dnl) Sagittarius is still at its center an R⁶RS implementation,
+    (@ dnl) and does not want to have redefinitions. So we disable the
+    (@ dnl) definitions of string-upcase and string-downcase.
+    (@ dnl)
+    (@ include-raw
+       "sed \
+        -e 's/^\\([[:space:]]*\x28;require\\(\\|-if\\) \\)/;;;\\1/' \
+        -e 's/\x28;define \x28;string-upcase /\x28;define \x28;string-upcase-NOTUSED /' \
+        -e 's/\x28;define \x28;string-downcase /\x28;define \x28;string-downcase-NOTUSED /' \
+        gafoundry-lib/strcase.scm \
+        gafoundry-lib/format.scm|")
+
+    ))

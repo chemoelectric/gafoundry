@@ -14,5 +14,3 @@
   (extension gafoundry-lib.xfprec
              (source "gafoundry-lib/prec.sld"))
   ))
-
-
