@@ -4,13 +4,31 @@
  (license "MIT")
  (category math)
  (dependencies (chicken "6.0.0")
-               srfi-1)
+               srfi-1
+               srfi-37)
  (test-dependencies scsh-process test)
  (components
+  (program g25spec2gaspec
+           (source "g25spec2gaspec.scm")
+           (component-dependencies
+            gafoundry-lib.g25spec2gaspec))
+  (extension gafoundry-lib.g25spec2gaspec
+             (source "gafoundry-lib/g25spec2gaspec.sld")
+             (component-dependencies
+              gafoundry-lib.define-record-factory
+              gafoundry-lib.format
+              gafoundry-lib.version
+              gafoundry-lib.xml-parse))
   (extension gafoundry-lib.version
-             (source "gafoundry-lib/version.sld"))
+             (source "gafoundry-lib/version.sld")
+             (component-dependencies
+              gafoundry-lib.format))
+  (extension gafoundry-lib.prec
+             (source "gafoundry-lib/prec.sld"))
   (extension gafoundry-lib.xml-parse
              (source "gafoundry-lib/xml-parse.sld"))
-  (extension gafoundry-lib.xfprec
-             (source "gafoundry-lib/prec.sld"))
+  (extension gafoundry-lib.format
+             (source "gafoundry-lib/format.sld"))
+  (extension gafoundry-lib.define-record-factory
+             (source "gafoundry-lib/define-record-factory.sld"))
   ))

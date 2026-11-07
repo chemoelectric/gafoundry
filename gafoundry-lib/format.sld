@@ -33,8 +33,8 @@
                    (chibi show pretty)))
     (chicken (import (chicken pretty-print)))
     (gambit (import (only (gambit) pretty-print)))
-    (gauche (import (gauche base)
-                    (gauche keyword)))
+    (gauche (import (only (gauche base) pprint)
+                    (only (gauche keyword) :port)))
     (sagittarius (import (pp)))
     (else))
 

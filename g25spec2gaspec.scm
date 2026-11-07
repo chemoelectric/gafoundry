@@ -21,6 +21,6 @@
 
 (import (scheme base)
         (scheme process-context)
-        (gafoundry g25spec2gaspec))
+        (gafoundry-lib g25spec2gaspec))
 
-(g25spec2gaspec (command-line))
+(apply g25spec2gaspec (cdr (command-line)))

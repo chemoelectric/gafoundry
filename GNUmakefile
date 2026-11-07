@@ -24,12 +24,14 @@
 
 PACKAGE = gafoundry
 VERSION = 1.0.0
+COPYRIGHT = "Copyright © 2026 Barry Schwartz\n"
 
 CALM1 = calm1
 CALM1_R7RS = $(CALM1) --comment-style=r7rs
 CALM1_FLAGS = \
 	-D'PACKAGE=$(PACKAGE)' \
-	-D'VERSION=$(VERSION)'
+	-D'VERSION=$(VERSION)' \
+	-D'COPYRIGHT=$(COPYRIGHT)'
 
 CHICKEN_INSTALL = chicken-install
 CHICKEN_UNINSTALL = chicken-uninstall
@@ -43,6 +45,17 @@ default: all
 all:: gafoundry.egg
 gafoundry.egg: gafoundry.egg.calm1
 	$(CALM1) $(CALM1_FLAGS) $(<) -o $(@)
+
+all:: g25spec2gaspec
+g25spec2gaspec: \
+		gafoundry.egg \
+		g25spec2gaspec.scm \
+		gafoundry-lib/g25spec2gaspec.sld \
+		gafoundry-lib/version.sld \
+		gafoundry-lib/xml-parse.sld \
+		gafoundry-lib/format.sld \
+		gafoundry-lib/define-record-factory.sld
+	$(CHICKEN_INSTALL) -n
 
 gafoundry-lib/version.sld: GNUmakefile
 all:: gafoundry-lib/version.sld
@@ -67,7 +80,7 @@ all:: gafoundry-lib/prec.sld
 maintainer-clean:: ; -rm -f gafoundry-lib/prec.sld
 
 .PHONY: install
-install::
+install:: g25spec2gaspec
 	$(CHICKEN_INSTALL) -s
 
 .PHONY: uninstall
