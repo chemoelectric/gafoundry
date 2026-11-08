@@ -46,15 +46,20 @@ all:: gafoundry.egg
 gafoundry.egg: gafoundry.egg.calm1
 	$(CALM1) $(CALM1_FLAGS) $(<) -o $(@)
 
+LIBRARY_SRC = \
+		gafoundry-lib/version.sld \
+		gafoundry-lib/xml-parse.sld \
+		gafoundry-lib/format.sld \
+		gafoundry-lib/match.sld \
+		gafoundry-lib/prec.sld \
+		gafoundry-lib/define-record-factory.sld
+
 all:: g25spec2gaspec
 g25spec2gaspec: \
 		gafoundry.egg \
 		g25spec2gaspec.scm \
 		gafoundry-lib/g25spec2gaspec.sld \
-		gafoundry-lib/version.sld \
-		gafoundry-lib/xml-parse.sld \
-		gafoundry-lib/format.sld \
-		gafoundry-lib/define-record-factory.sld
+		$(LIBRARY_SRC)
 	$(CHICKEN_INSTALL) -n
 
 gafoundry-lib/version.sld: GNUmakefile
@@ -78,6 +83,10 @@ gafoundry-lib/prec.sld: gafoundry-lib/strsrch.scm
 gafoundry-lib/prec.sld: gafoundry-lib/prec.scm
 all:: gafoundry-lib/prec.sld
 maintainer-clean:: ; -rm -f gafoundry-lib/prec.sld
+
+gafoundry-lib/match.sld: gafoundry-lib/match.scm
+all:: gafoundry-lib/match.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/match.sld
 
 .PHONY: install
 install:: g25spec2gaspec

@@ -7,6 +7,8 @@
                srfi-1
                srfi-37)
  (test-dependencies scsh-process test)
+ (component-options
+  (csc-options -O2 -d1 -w))
  (components
   (program g25spec2gaspec
            (source "g25spec2gaspec.scm")
@@ -29,6 +31,8 @@
              (source "gafoundry-lib/xml-parse.sld"))
   (extension gafoundry-lib.format
              (source "gafoundry-lib/format.sld"))
+  (extension gafoundry-lib.match
+             (source "gafoundry-lib/match.sld"))
   (extension gafoundry-lib.define-record-factory
              (source "gafoundry-lib/define-record-factory.sld"))
   ))
