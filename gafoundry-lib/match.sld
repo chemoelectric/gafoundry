@@ -51,15 +51,17 @@
                     (only (gauche record)
                           rtd-accessor
                           rtd-mutator)))
+;;;    (sagittarius (import (only (sagittarius)
+;;;                               er-macro-transformer)
+;;;                         (only (sagittarius clos)
+;;;                               is-a?
+;;;                               slot-ref-using-class
+;;;                               slot-set-using-class!)
+;;;                         (rename (only (sagittarius clos)
+;;;                                       (slot-ref orig-slot-ref)
+;;;                                       (slot-set! orig-slot-set!)))))
     (sagittarius (import (only (sagittarius)
-                               er-macro-transformer)
-                         (only (sagittarius clos)
-                               is-a?
-                               slot-ref-using-class
-                               slot-set-using-class!)
-                         (rename (only (sagittarius clos)
-                                       (slot-ref orig-slot-ref)
-                                       (slot-set! orig-slot-set!)))))
+                               er-macro-transformer)))
     (else))
 
   (begin

@@ -22,9 +22,10 @@
 (define-library (gafoundry-lib g25spec2gaspec)
 
   (import (scheme base)
+          (scheme char)
           (scheme write)
           (scheme process-context)
-          (only (srfi 1) proper-list? append! every)
+          (only (srfi 1) proper-list? append! any every)
           (srfi 37)
           (gafoundry-lib define-record-factory)
           (gafoundry-lib match)
@@ -38,6 +39,20 @@
 
 ;;;---------------------------------------------------------------------
 
+    (define (check-string . strlst)
+      (lambda (str)
+        (unless (any (lambda (s) (string=? s str)) strlst)
+          (error "expected a string to be one of those listed"
+                 str strlst))
+        str))
+
+    (define (g25bool->boolean str)
+      (unless (and (string? str)
+                   (or (string=? str "false")
+                       (string=? str "true")))
+        (error "expected \"false\" or \"true\"" str))
+      (string=? str "true"))
+
     (define sxml->gaspec
       (match-lambda
         (`(*TOP* . ,sxml)
@@ -45,9 +60,45 @@
         (`((*PROCESSING-INSTRUCTIONS* . ,_) . ,sxml)
          (sxml->gaspec sxml))
         (`((g25spec . ,sxml))
-         `(g25spec . ,sxml))
+         `(gaspec ,(g25spec->gaspec sxml)))
         (sxml
          (error "this might not be a g25spec" (format #f "~Y" sxml)))))
+
+    (define g25spec->gaspec
+      (match-lambda
+        (`((@ . ,g25spec-attributes) . ,sxml)
+         `(,@(map g25spec-attribute->gaspec g25spec-attributes)
+           . ,(g25spec->gaspec sxml)))
+        (fixme fixme)))
+
+    (define g25spec-attribute->gaspec
+      (match-lambda
+        (`(license ,(? string? str))
+         `(license ,((check-string "custom" "gpl" "bsd") str)))
+        (`(language ,(? string? str))
+         `(language ,(string-downcase str)))
+        (`(namespace ,(? string? str))
+         `(namespace ,str))
+        (`(coordStorage ,(? string? str))
+         `(coord-storage ,((check-string "array" "variables") str)))
+        (`(defaultOperatorBindings ,(? string? str))
+         `(default-operator-bindings ,(g25bool->boolean str)))
+        (`(dimension ,(? string? str))
+         (let ((n (string->number str)))
+           (unless (and (exact-integer? n)
+                        (positive? n))
+             (error "dimension must be an exact positive integer" n))
+           `(dimension ,n)))
+        (`(testSuite ,(? string? str))
+         `(test-suite ,(g25bool->boolean str)))
+        (`(reportUsage ,(? string? str))
+         `(report-usage ,(g25bool->boolean str)))
+        (`(gmvCode ,(? string? str))
+         `(gmv-code ,((check-string "expand" "runtime") str)))
+        (`(parser ,(? string? str))
+         `(parser ,((check-string "none" "builtin" "antlr") str)))
+        (`(copyright ,(? string? str))
+         `(copyright ,str))))
 
 ;;;---------------------------------------------------------------------
 

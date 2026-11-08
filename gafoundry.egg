@@ -19,6 +19,7 @@
              (component-dependencies
               gafoundry-lib.define-record-factory
               gafoundry-lib.format
+              gafoundry-lib.match
               gafoundry-lib.version
               gafoundry-lib.xml-parse))
   (extension gafoundry-lib.version
