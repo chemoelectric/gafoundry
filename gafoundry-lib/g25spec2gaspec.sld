@@ -27,6 +27,7 @@
           (only (srfi 1) proper-list? append! every)
           (srfi 37)
           (gafoundry-lib define-record-factory)
+          (gafoundry-lib match)
           (gafoundry-lib format)
           (gafoundry-lib version)
           (gafoundry-lib xml-parse))
@@ -37,8 +38,16 @@
 
 ;;;---------------------------------------------------------------------
 
-    (define (sxml->gaspec sxml)
-      sxml)
+    (define sxml->gaspec
+      (match-lambda
+        (`(*TOP* . ,sxml)
+         (sxml->gaspec sxml))
+        (`((*PROCESSING-INSTRUCTIONS* . ,_) . ,sxml)
+         (sxml->gaspec sxml))
+        (`((g25spec . ,sxml))
+         `(g25spec . ,sxml))
+        (sxml
+         (error "this might not be a g25spec" (format #f "~Y" sxml)))))
 
 ;;;---------------------------------------------------------------------
 
