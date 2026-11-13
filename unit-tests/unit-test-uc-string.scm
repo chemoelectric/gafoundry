@@ -297,6 +297,10 @@
                        ,(string->uc-string "barney")
                        ,(string->uc-string "betty"))
                      (string->uc-string "=") 'prefix)))
+(check (uc-string=? (string->uc-string "cba")
+                    (reverse-list->uc-string '(#\a #\b #\c))))
+(check (equal? '(#\a #\b #\c)
+               (uc-string->reverse-list (string->uc-string "cba"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

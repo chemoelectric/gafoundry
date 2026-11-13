@@ -33,6 +33,8 @@
 
           list->uc-string
           uc-string->list
+          reverse-list->uc-string
+          uc-string->reverse-list
 
           string->uc-string
           uc-string->string
@@ -143,6 +145,19 @@
                   (bv (make-bytevector (* len 4) 0)))
              (do ((p lst (cdr p))
                   (i 0 (+ i 1)))
+                 ((not-pair? p))
+               (bytevector-u32-set! bv (* i 4) (char->integer (car p))
+                                    (endianness)))
+             (construct bv)))))
+
+      (constructor>
+       reverse-list->uc-string
+       (lambda (construct)
+         (lambda (lst)
+           (let* ((len (length lst))
+                  (bv (make-bytevector (* len 4) 0)))
+             (do ((p lst (cdr p))
+                  (i (- len 1) (- i 1)))
                  ((not-pair? p))
                (bytevector-u32-set! bv (* i 4) (char->integer (car p))
                                     (endianness)))
@@ -460,6 +475,14 @@
             ((= i n))
           (set-cdr! p (list (uc-string-ref str i))))
         (cdr lst)))
+
+    (define (uc-string->reverse-list str)
+      (let* ((n (uc-string-length str))
+             (lst '()))
+        (do ((i 0 (+ i 1)))
+            ((= i n))
+          (set! lst (cons (uc-string-ref str i) lst)))
+        lst))
 
     (define (uc-string->string str)
       (utf32->string (bytevec str) (endianness)))
