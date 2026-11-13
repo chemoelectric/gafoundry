@@ -53,7 +53,29 @@
 (check (= 3 (utf32-string-length (list->utf32-string '(#\a #\b #\c)))))
 (check (equal? '(#\a #\b #\c)
                (utf32-string->list (utf32-string #\a #\b #\c))))
+(check (string=? "fred flintstone"
+                 (utf32-string->string
+                  (string->utf32-string "fred flintstone"))))
+(check (string=? "🔠🔡🉐🈹🟫⬛"
+                 (utf32-string->string
+                  (string->utf32-string "🔠🔡🉐🈹🟫⬛"))))
+(check (= 6 (utf32-string-length
+             (string->utf32-string "🔠🔡🉐🈹🟫⬛"))))
+(check (string=? "srfi-152"
+                 (utf32-string->string
+                  (symbol->utf32-string 'srfi-152))))
+(check (eq? 'srfi-152
+            (utf32-string->symbol (symbol->utf32-string 'srfi-152))))
+(check (string=? "12345" (utf32-string->string
+                          (number->utf32-string 12345))))
+(check (string=? "30071" (utf32-string->string
+                          (number->utf32-string 12345 8))))
+(check (= 12345 (utf32-string->number (string->utf32-string "12345"))))
+(check (= 12345 (utf32-string->number
+                 (string->utf32-string "30071") 8)))
 
 (format #t "pass: ~a~&" pass-count)
-(format #t "fail: ~a~&" fail-count)
+(format #t "~a: ~a~&"
+        (if (zero? fail-count) "fail" "FAIL")
+        fail-count)
 (exit (zero? fail-count))
