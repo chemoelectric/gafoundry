@@ -24,6 +24,9 @@
 
   (export utf32-string?
 
+          utf32-string-null?
+          utf32-string-length
+
           make-utf32-string
 
           utf32-string
@@ -39,8 +42,6 @@
 
           number->utf32-string
           utf32-string->number
-
-          utf32-string-length
 
           utf32-string-set!
           utf32-string-ref
@@ -177,14 +178,28 @@
 
 ;;;---------------------------------------------------------------------
 
+    (define (utf32-string-length str)
+      (bytevec-cpcnt (bytevec str)))
+
+    (define (utf32-string-null? str)
+      (zero? (utf32-string-length str)))
+
     (define (utf32-string . char*)
       (list->utf32-string char*))
 
     (define (utf32-string-append . str*)
       (utf32-string-concatenate str*))
-
-    (define (utf32-string-length str)
-      (bytevec-cpcnt (bytevec str)))
+    
+    (define utf32-string-copy!
+      (case-lambda
+        ((to at from start end)
+         (bytevector-copy! (bytevec to) (* at 4)
+                           (bytevec from) (* start 4) (* end 4)))
+        ((to at from start)
+         (bytevector-copy! (bytevec to) (* at 4)
+                           (bytevec from) (* start 4)))
+        ((to at from)
+         (bytevector-copy! (bytevec to) (* at 4) (bytevec from)))))
 
 ;;;---------------------------------------------------------------------
 
@@ -261,42 +276,23 @@
 
 ;;;---------------------------------------------------------------------
 
-    ;; In-place block bytevector fragment translation.
-    (define (utf32-string-copy! to at from start end)
-      (bytevector-copy! to (* at 4) from (* start 4) (* end 4)))
+    (define (utf32-string->list str)
+      (let ((n (utf32-string-length str))
+            (lst (list)))
+        (do ((i 0 (+ i 1))
+             (p lst (cdr p)))
+            ((= i n))
+          (set-cdr! p `(,(utf32-string-ref str i) . ())))
+        lst))
 
-
-    ;;
-    ;; List conversions.
-    ;;
-
-    (define (utf32-string->list bv)
-      (let ((n (utf32-string-length bv)))
-        (let loop ((lst '())
-                   (i 0))
-          (if (= i n)
-            (reverse! lst)
-            (loop (cons (utf32-string-ref bv i) lst) (+ i 1))))))
-
-    ;;
-    ;; Mapping between strings and utf32-strings.
-    ;;
-
-    (define (utf32-string->string bv)
-      (utf32->string bv (utf32-endianness)))
-
-;;;    (define (string->utf32-string str)
-;;;      (string->utf32 str (utf32-endianness)))
-
-    ;;
-    ;; Some more mappings.
-    ;;
+    (define (utf32-string->string str)
+      (utf32->string (bytevec str) (utf32-endianness)))
 
     (define (symbol->utf32-string symbol)
       (string->utf32-string (symbol->string symbol)))
 
-    (define (utf32-string->symbol bv)
-      (string->symbol (utf32-string->string bv)))
+    (define (utf32-string->symbol str)
+      (string->symbol (utf32-string->string str)))
 
     (define number->utf32-string
       (case-lambda
@@ -307,11 +303,11 @@
 
     (define utf32-string->number
       (case-lambda
-        ((bv)
-         (string->number (utf32-string->string bv)))
-        ((bv radix)
-         (string->number (utf32-string->string bv) radix))))
-
-    ))
+        ((str)
+         (string->number (utf32-string->string str)))
+        ((str radix)
+         (string->number (utf32-string->string str) radix))))
 
 ;;;---------------------------------------------------------------------
+
+    ))
