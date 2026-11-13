@@ -22,6 +22,7 @@
 ;; SOFTWARE.
 
 (import (scheme base)
+        (scheme char)
         (scheme process-context)
         (gafoundry-lib format)
         (gafoundry-lib uc-string))
@@ -97,6 +98,10 @@
   (check (char=? #\e (uc-string-ref str 4)))
   (check (char=? #\f (uc-string-ref str 5))))
 (check (uc-string=? (string->uc-string "red")
+                    (uc-substring
+                     (string->uc-string "fred flintstone")
+                     1 4)))
+(check (uc-string=? (string->uc-string "red")
                     (uc-string-copy
                      (string->uc-string "fred flintstone")
                      1 4)))
@@ -154,6 +159,71 @@
 (check (equal? '(#\b #\c #\d)
                (uc-string-fold-right cons '()
                                      (string->uc-string "abcde") 1 4)))
+(check (uc-string=? (string->uc-string "fred and wilma")
+                    (uc-string-append (string->uc-string "fred")
+                                      (string->uc-string " ")
+                                      (string->uc-string "and")
+                                      (string->uc-string " ")
+                                      (string->uc-string "wilma"))))
+(check (not (uc-string-index (string->uc-string "fred flintstone")
+                             (lambda (ch) (char=? ch #\q)))))
+(check (= 3 (uc-string-index (string->uc-string "fred flintstone")
+                             (lambda (ch) (char=? ch #\d)))))
+(check (= 8 (uc-string-index (string->uc-string "fred flintstone")
+                             (lambda (ch) (char=? ch #\n)) 5)))
+(check (not (uc-string-index (string->uc-string "fred flintstone")
+                             (lambda (ch) (char=? ch #\n)) 5 8)))
+(check (= 8 (uc-string-index (string->uc-string "fred flintstone")
+                             (lambda (ch) (char=? ch #\n)) 5 9)))
+(check (not (uc-string-skip (string->uc-string "fred flintstone")
+                            (lambda (ch)
+                              (or (char-alphabetic? ch)
+                                  (char-whitespace? ch))))))
+(check (= 4 (uc-string-skip (string->uc-string "fred flintstone")
+                            (lambda (ch) (char-alphabetic? ch)))))
+(check (= 4 (uc-string-skip (string->uc-string "fred flintstone")
+                            (lambda (ch) (char-alphabetic? ch)) 4)))
+(check (not (uc-string-skip (string->uc-string "fred flintstone")
+                            (lambda (ch) (char-alphabetic? ch)) 5)))
+(check (= 4 (uc-string-skip (string->uc-string "fred flintstone")
+                            (lambda (ch) (char-alphabetic? ch)) 3 5)))
+(check (not (uc-string-skip (string->uc-string "fred flintstone")
+                            (lambda (ch) (char-alphabetic? ch)) 3 4)))
+(check (not (uc-string-index-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char=? ch #\q)))))
+(check (= 13 (uc-string-index-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char=? ch #\n)))))
+(check (= 13 (uc-string-index-right
+              (string->uc-string "fred flintstone")
+              (lambda (ch) (char=? ch #\n)) 13)))
+(check (not (uc-string-index-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char=? ch #\n)) 14)))
+(check (= 8 (uc-string-index-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char=? ch #\n)) 8 13)))
+(check (not (uc-string-skip-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch)
+               (or (char-alphabetic? ch)
+                   (char-whitespace? ch))))))
+(check (= 4 (uc-string-skip-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char-alphabetic? ch)))))
+(check (= 4 (uc-string-skip-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char-alphabetic? ch)) 4)))
+(check (not (uc-string-skip-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char-alphabetic? ch)) 5)))
+(check (= 4 (uc-string-skip-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char-alphabetic? ch)) 4 5)))
+(check (not (uc-string-skip-right
+             (string->uc-string "fred flintstone")
+             (lambda (ch) (char-alphabetic? ch)) 4 4)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

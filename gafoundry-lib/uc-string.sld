@@ -46,6 +46,7 @@
           uc-string-set!
           uc-string-ref
 
+          uc-substring
           uc-string-copy
           uc-string-copy!
 
@@ -53,6 +54,8 @@
 
           uc-string-index
           uc-string-index-right
+          uc-string-skip
+          uc-string-skip-right
 
           uc-string-map
 
@@ -198,6 +201,9 @@
 
     (define (uc-string-append . str*)
       (uc-string-concatenate str*))
+
+    (define (uc-substring str start end)
+      (uc-string-copy str start end))
     
     (define uc-string-copy!
       (case-lambda
@@ -296,21 +302,59 @@
 
 ;;;---------------------------------------------------------------------
 
-    (define (uc-string-index str pred)
-      (let* ((bv (bytevec str))
-             (len (bytevec-cpcnt bv)))
-        (let loop ((i 0))
-          (cond ((= i len) #f)
-                ((pred (bytevec-ref bv i)) i)
-                (else (loop (+ i 1)))))))
+    (define uc-string-index
+      (case-lambda
+        ((str pred start end)
+         (let ((bv (bytevec str)))
+           (let loop ((i start))
+             (cond ((= i end) #f)
+                   ((pred (bytevec-ref bv i)) i)
+                   (else (loop (+ i 1)))))))
+        ((str pred start)
+         (uc-string-index str pred start (uc-string-length str)))
+        ((str pred)
+         (uc-string-index str pred 0 (uc-string-length str)))))
 
-    (define (uc-string-index-right str pred)
-      (let* ((bv (bytevec str))
-             (len (bytevec-cpcnt bv)))
-        (let loop ((i (- len 1)))
-          (cond ((= i -1) #f)
+    (define uc-string-index-right
+      (case-lambda 
+        ((str pred start end)
+         (let ((bv (bytevec str))
+               (finish (- start 1)))
+           (let loop ((i (- end 1)))
+          (cond ((= i finish) #f)
                 ((pred (bytevec-ref bv i)) i)
                 (else (loop (- i 1)))))))
+        ((str pred start)
+         (uc-string-index-right str pred start (uc-string-length str)))
+        ((str pred)
+         (uc-string-index-right str pred 0 (uc-string-length str)))))
+
+    (define uc-string-skip
+      (case-lambda
+        ((str pred start end)
+         (let ((bv (bytevec str)))
+           (let loop ((i start))
+             (cond ((= i end) #f)
+                   ((pred (bytevec-ref bv i)) (loop (+ i 1)))
+                   (else i)))))
+        ((str pred start)
+         (uc-string-skip str pred start (uc-string-length str)))
+        ((str pred)
+         (uc-string-skip str pred 0 (uc-string-length str)))))
+
+    (define uc-string-skip-right
+      (case-lambda 
+        ((str pred start end)
+         (let ((bv (bytevec str))
+               (finish (- start 1)))
+           (let loop ((i (- end 1)))
+          (cond ((= i finish) #f)
+                ((pred (bytevec-ref bv i)) (loop (- i 1)))
+                (else i)))))
+        ((str pred start)
+         (uc-string-skip-right str pred start (uc-string-length str)))
+        ((str pred)
+         (uc-string-skip-right str pred 0 (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 
