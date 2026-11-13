@@ -83,10 +83,22 @@
 
   (begin
 
-    (define-syntax endianness
-      (syntax-rules ()
-        ((endianness)
-         'little)))
+    (cond-expand
+      ((or little-endian x86_64 x86-64)
+       (define-syntax endianness
+         (syntax-rules ()
+           ((endianness)
+            'little))))
+      (big-endian
+       (define-syntax endianness
+         (syntax-rules ()
+           ((endianness)
+            'big))))
+      (else
+       (define-syntax endianness
+         (syntax-rules ()
+           ((endianness)
+            (native-endianness))))))
 
     (define (bytevec-set! bv k char)
       (bytevector-u32-set! bv (* k 4) (char->integer char)
