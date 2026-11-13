@@ -183,23 +183,6 @@
                    (bytevector-copy! out-bv i bv 0 len)
                    (loop (cdr p) (+ i len)))))))))
 
-      (constructor>
-       ;;
-       ;; FIXME: LET THIS TAKE MULTI-ARGUMENT proc PROCEDURES.
-       ;;
-       uc-string-map
-       (lambda (construct)
-         (lambda (proc str)
-           (let* ((in-bv (bytevec str))
-                  (bvlen (bytevector-length in-bv))
-                  (out-bv (make-bytevector bvlen 0))
-                  (len (truncate-quotient bvlen 4)))
-             (do ((i 0 (+ i 1)))
-                 ((= i len))
-               (bytevec-set!
-                out-bv i (proc (bytevec-ref in-bv i))))
-             (construct out-bv)))))
-
       (getter> 1 bytevec) )
 
 ;;;---------------------------------------------------------------------
@@ -236,6 +219,32 @@
       (bytevec-ref (bytevec str) k))
 
 ;;;---------------------------------------------------------------------
+
+    (define uc-string-map
+      (case-lambda
+        ((proc str)
+         (let* ((len (uc-string-length str))
+                (lst (list #f)))
+           (do ((i 0 (+ i 1))
+                (p lst (cdr p)))
+               ((= i len))
+             (let* ((elem (proc (uc-string-ref str i)))
+                    (elem (if (char? elem) (uc-string elem) elem)))
+               (set-cdr! p (list elem))))
+           (uc-string-concatenate (cdr lst))))
+        ((proc str . str*)
+         (let* ((str* (cons str str*))
+                (len (apply min (map uc-string-length str*)))
+                (lst (list #f)))
+           (do ((i 0 (+ i 1))
+                (p lst (cdr p)))
+               ((= i len))
+             (let* ((elem (apply proc (map (lambda (s)
+                                             (uc-string-ref s i))
+                                           str*)))
+                    (elem (if (char? elem) (uc-string elem) elem)))
+               (set-cdr! p (list elem))))
+           (uc-string-concatenate (cdr lst))))))
 
     (define uc-string-fold
       (case-lambda
