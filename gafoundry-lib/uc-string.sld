@@ -58,6 +58,7 @@
           uc-string-skip-right
 
           uc-string-map
+          uc-string-for-each
 
           uc-string-fold
           uc-string-fold-right
@@ -327,6 +328,23 @@
                     (elem (if (char? elem) (uc-string elem) elem)))
                (set-cdr! p (list elem))))
            (uc-string-concatenate (cdr lst))))))
+
+    (define uc-string-for-each
+      (case-lambda
+        ((proc str)
+         (let ((len (uc-string-length str)))
+           (do ((i 0 (+ i 1)))
+               ((= i len))
+             (proc (uc-string-ref str i)))))
+        ((proc str . str*)
+         (let* ((str* (cons str str*))
+                (len (apply min (map uc-string-length str*))))
+           (do ((i 0 (+ i 1)))
+               ((= i len))
+             (apply proc (map (lambda (s) (uc-string-ref s i))
+                              str*)))))))
+
+;;;---------------------------------------------------------------------
 
     (define uc-string-fold
       (case-lambda
