@@ -205,8 +205,8 @@
              (string->uc-string "fred flintstone")
              (lambda (ch) (char=? ch #\q)))))
 (check (= 13 (uc-string-index-right
-             (string->uc-string "fred flintstone")
-             (lambda (ch) (char=? ch #\n)))))
+              (string->uc-string "fred flintstone")
+              (lambda (ch) (char=? ch #\n)))))
 (check (= 13 (uc-string-index-right
               (string->uc-string "fred flintstone")
               (lambda (ch) (char=? ch #\n)) 13)))
