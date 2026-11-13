@@ -50,6 +50,9 @@
 (check (= 3 (utf32-string-length (make-utf32-string 3))))
 (check (utf32-string-null? (utf32-string)))
 (check (= 3 (utf32-string-length (utf32-string #\a #\b #\c))))
+(check (= 3 (utf32-string-length (list->utf32-string '(#\a #\b #\c)))))
+(check (equal? '(#\a #\b #\c)
+               (utf32-string->list (utf32-string #\a #\b #\c))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "fail: ~a~&" fail-count)

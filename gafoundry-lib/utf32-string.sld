@@ -277,13 +277,13 @@
 ;;;---------------------------------------------------------------------
 
     (define (utf32-string->list str)
-      (let ((n (utf32-string-length str))
-            (lst (list)))
+      (let* ((n (utf32-string-length str))
+             (lst (list #f)))
         (do ((i 0 (+ i 1))
              (p lst (cdr p)))
             ((= i n))
-          (set-cdr! p `(,(utf32-string-ref str i) . ())))
-        lst))
+          (set-cdr! p (list (utf32-string-ref str i))))
+        (cdr lst)))
 
     (define (utf32-string->string str)
       (utf32->string (bytevec str) (utf32-endianness)))
