@@ -129,7 +129,7 @@
                    (endianness (utf32-endianness)))
               (do ((p lst (cdr p))
                    (i 0 (+ i 1)))
-                  ((not-pair? lst))
+                  ((not-pair? p))
                 (bytevector-u32-set! bv (* i 4) (char->integer (car p))
                                      endianness))
               (construct bv)))))
