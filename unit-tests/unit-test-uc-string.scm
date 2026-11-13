@@ -27,6 +27,14 @@
         (gafoundry-lib format)
         (gafoundry-lib uc-string))
 
+;;;
+;;; Run with argument “pretty” to pretty-print the test expressions.
+;;;
+(define *pretty*
+  (make-parameter
+   (and (<= 2 (length (command-line)))
+        (string=? "pretty" (cadr (command-line))))))
+
 (define pass-count 0)
 (define fail-count 0)
 
@@ -34,7 +42,9 @@
   (syntax-rules ()
     ((check expr)
      (begin
-       (format #t "~s" 'expr)
+       (if (*pretty*)
+         (format #t "~y" 'expr)
+         (format #t "~s" 'expr))
        (if expr
          (begin
            (set! pass-count (+ pass-count 1))
@@ -159,6 +169,8 @@
 (check (equal? '(#\b #\c #\d)
                (uc-string-fold-right cons '()
                                      (string->uc-string "abcde") 1 4)))
+(check (uc-string=? (string->uc-string "")
+                    (uc-string-concatenate '())))
 (check (uc-string=? (string->uc-string "fred and wilma")
                     (uc-string-append (string->uc-string "fred")
                                       (string->uc-string " ")
@@ -224,6 +236,51 @@
 (check (not (uc-string-skip-right
              (string->uc-string "fred flintstone")
              (lambda (ch) (char-alphabetic? ch)) 4 4)))
+(check (uc-string=? (string->uc-string "fred and wilma")
+                    (uc-string-join
+                     `(,(string->uc-string "fred")
+                       ,(string->uc-string "and")
+                       ,(string->uc-string "wilma")))))
+(check (uc-string=? (string->uc-string "fred, wilma, barney, betty")
+                    (uc-string-join
+                     `(,(string->uc-string "fred")
+                       ,(string->uc-string "wilma")
+                       ,(string->uc-string "barney")
+                       ,(string->uc-string "betty"))
+                     (string->uc-string ", "))))
+(check (uc-string=? (string->uc-string "fred, wilma, barney, betty")
+                    (uc-string-join
+                     `(,(string->uc-string "fred")
+                       ,(string->uc-string "wilma")
+                       ,(string->uc-string "barney")
+                       ,(string->uc-string "betty"))
+                     (string->uc-string ", ") 'infix)))
+(check (uc-string-null? (uc-string-join '())))
+(check (uc-string-null? (uc-string-join
+                         '() (string->uc-string ", ") 'infix)))
+(check (guard (condition (#t #t))
+         (uc-string-join '() (string->uc-string ", ") 'strict-infix)))
+(check (uc-string=? (string->uc-string "fred, wilma, barney, betty")
+                    (uc-string-join
+                     `(,(string->uc-string "fred")
+                       ,(string->uc-string "wilma")
+                       ,(string->uc-string "barney")
+                       ,(string->uc-string "betty"))
+                     (string->uc-string ", ") 'strict-infix)))
+(check (uc-string=? (string->uc-string "fred. wilma. barney. betty. ")
+                    (uc-string-join
+                     `(,(string->uc-string "fred")
+                       ,(string->uc-string "wilma")
+                       ,(string->uc-string "barney")
+                       ,(string->uc-string "betty"))
+                     (string->uc-string ". ") 'suffix)))
+(check (uc-string=? (string->uc-string "=fred=wilma=barney=betty")
+                    (uc-string-join
+                     `(,(string->uc-string "fred")
+                       ,(string->uc-string "wilma")
+                       ,(string->uc-string "barney")
+                       ,(string->uc-string "betty"))
+                     (string->uc-string "=") 'prefix)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

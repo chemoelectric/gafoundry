@@ -64,6 +64,7 @@
 
           uc-string-append
           uc-string-concatenate
+          uc-string-join
           )
 
   (import (scheme base)
@@ -185,6 +186,81 @@
                         (len (bytevector-length bv)))
                    (bytevector-copy! out-bv i bv 0 len)
                    (loop (cdr p) (+ i len)))))))))
+
+      (constructor>
+       uc-string-join
+       (let ((space (make-uc-string 1 #\space))
+             (empty-bv (make-bytevector 0)))
+         (lambda (construct)
+           (define (check-args str* delimiter grammar)
+             (unless (or (eq? grammar 'infix)
+                         (eq? grammar 'strict-infix)
+                         (eq? grammar 'suffix)
+                         (eq? grammar 'prefix))
+               (error "not a legal uc-string-join grammar" grammar))
+             (when (and (null-list? str*)
+                        (eq? grammar 'strict-infix))
+               (error "empty list not allowed \
+                          with strict-infix grammar")))
+           (define (strjoin str* delimiter grammar)
+             (check-args str* delimiter grammar)
+             (let* ((bv* (map bytevec str*))
+                    (strcnt (length bv*))
+                    (delim-bv (bytevec delimiter))
+                    (delim-len (bytevector-length delim-bv)))
+               (let-values
+                   (((delim-count initial-len initial-delim
+                                  final-len final-delim)
+                     (case grammar
+                       ((infix strict-infix)
+                        (values (max 0 (- strcnt 1))
+                                0 empty-bv
+                                0 empty-bv))
+                       ((suffix)
+                        (values strcnt
+                                0 empty-bv
+                                delim-len delim-bv))
+                       ((prefix)
+                        (values strcnt
+                                delim-len delim-bv
+                                0 empty-bv)))))
+                 (let* ((total-bytes
+                         (let loop ((p bv*)
+                                    (sum 0))
+                           (if (not-pair? p)
+                             (+ sum (* delim-count delim-len))
+                             (loop (cdr p)
+                                   (+ sum (bytevector-length
+                                           (car p)))))))
+                        (out-bv (make-bytevector total-bytes 0)))
+                   (bytevector-copy! out-bv 0
+                                     initial-delim 0 initial-len)
+                   (let loop ((p bv*)
+                              (i initial-len))
+                     (if (not-pair? p)
+                       (construct out-bv)
+                       (let* ((bv (car p))
+                              (len (bytevector-length bv))
+                              (j i))
+                         (bytevector-copy! out-bv j bv 0 len)
+                         (set! j (+ i len))
+                         (if (pair? (cdr p))
+                           (begin
+                             (bytevector-copy! out-bv j
+                                               delim-bv 0 delim-len)
+                             (set! j (+ j delim-len)))
+                           (begin
+                             (bytevector-copy! out-bv j
+                                               final-delim 0 final-len)
+                             (set! j (+ j final-len))))
+                         (loop (cdr p) j))))))))
+           (case-lambda
+             ((str*)
+              (strjoin str* space 'infix))
+             ((str* delimiter)
+              (strjoin str* delimiter 'infix))
+             ((str* delimiter grammar)
+              (strjoin str* delimiter grammar))))))
 
       (getter> 1 bytevec) )
 
