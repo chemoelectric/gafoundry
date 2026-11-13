@@ -18,6 +18,7 @@
              (source "gafoundry-lib/g25spec2gaspec.sld")
              (component-dependencies
               gafoundry-lib.define-record-factory
+              gafoundry-lib.utf32-string
               gafoundry-lib.format
               gafoundry-lib.match
               gafoundry-lib.version
@@ -34,6 +35,10 @@
              (source "gafoundry-lib/format.sld"))
   (extension gafoundry-lib.match
              (source "gafoundry-lib/match.sld"))
+  (extension gafoundry-lib.utf32-string
+             (source "gafoundry-lib/utf32-string.sld")
+             (component-dependencies
+              gafoundry-lib.define-record-factory))
   (extension gafoundry-lib.define-record-factory
              (source "gafoundry-lib/define-record-factory.sld"))
   ))

@@ -52,6 +52,7 @@ LIBRARY_SRC = \
 		gafoundry-lib/format.sld \
 		gafoundry-lib/match.sld \
 		gafoundry-lib/prec.sld \
+		gafoundry-lib/utf32-string.sld \
 		gafoundry-lib/define-record-factory.sld
 
 all:: g25spec2gaspec
