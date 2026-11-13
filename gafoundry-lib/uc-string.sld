@@ -183,6 +183,20 @@
                    (bytevector-copy! out-bv i bv 0 len)
                    (loop (cdr p) (+ i len)))))))))
 
+      (constructor>
+       uc-string-map
+       (lambda (construct)
+         (lambda (proc str)
+           (let* ((in-bv (bytevec str))
+                  (bvlen (bytevector-length in-bv))
+                  (out-bv (make-bytevector bvlen 0))
+                  (len (truncate-quotient bvlen 4)))
+             (do ((i 0 (+ i 1)))
+                 ((= i len))
+               (bytevec-set!
+                out-bv i (proc (bytevec-ref in-bv i))))
+             (construct out-bv)))))
+
       (getter> 1 bytevec) )
 
 ;;;---------------------------------------------------------------------
@@ -219,17 +233,6 @@
       (bytevec-ref (bytevec str) k))
 
 ;;;---------------------------------------------------------------------
-
-    (define (uc-string-map proc str)
-      (let* ((in-bv (bytevec str))
-             (bvlen (bytevector-length in-bv))
-             (out-bv (make-bytevector bvlen 0))
-             (len (truncate-quotient bvlen 4)))
-        (do ((i 0 (+ i 1)))
-            ((= i len))
-          (bytevec-set!
-           out-bv i (proc (bytevec-ref in-bv i))))
-        out-bv))
 
     (define (uc-string-fold kons knil str)
       (let* ((bv (bytevec str))

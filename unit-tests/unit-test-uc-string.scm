@@ -106,6 +106,20 @@
 (check (uc-string=? (string->uc-string "fred flintstone")
                     (uc-string-copy
                      (string->uc-string "fred flintstone"))))
+(let ((str (make-uc-string 10 #\.)))
+  (uc-string-copy! str 9 (string->uc-string "🔠🔡🉐🈹🟫⬛") 4 5)
+  (check (uc-string=? str (string->uc-string ".........🟫"))))
+(let ((str (make-uc-string 10 #\.)))
+  (uc-string-copy! str 4 (string->uc-string "🔠🔡🉐🈹🟫⬛") 3)
+  (check (uc-string=? str (string->uc-string "....🈹🟫⬛..."))))
+(let ((str (make-uc-string 10 #\.)))
+  (uc-string-copy! str 2 (string->uc-string "🔠🔡🉐🈹🟫⬛"))
+  (check (uc-string=? str (string->uc-string "..🔠🔡🉐🈹🟫⬛.."))))
+(check (uc-string=? (string->uc-string "23456")
+                    (uc-string-map (lambda (ch)
+                                     (integer->char
+                                      (+ 1 (char->integer ch))))
+                                   (string->uc-string "12345"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
