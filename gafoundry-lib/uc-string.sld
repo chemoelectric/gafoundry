@@ -184,6 +184,9 @@
                    (loop (cdr p) (+ i len)))))))))
 
       (constructor>
+       ;;
+       ;; FIXME: LET THIS TAKE MULTI-ARGUMENT proc PROCEDURES.
+       ;;
        uc-string-map
        (lambda (construct)
          (lambda (proc str)
@@ -234,23 +237,38 @@
 
 ;;;---------------------------------------------------------------------
 
-    (define (uc-string-fold kons knil str)
-      (let* ((bv (bytevec str))
-             (len (bytevec-cpcnt bv))
-             (accum knil))
-        (do ((i 0 (+ i 1)))
-            ((= i len))
-          (set! accum (kons (bytevec-ref bv i) accum)))
-        accum))
+    (define uc-string-fold
+      (case-lambda
+        ((kons knil str start end)
+         (unless (<= start end)
+           (error "start must come before or at end" start end))
+         (let* ((bv (bytevec str))
+                (accum knil))
+           (do ((i start (+ i 1)))
+               ((= i end))
+             (set! accum (kons (bytevec-ref bv i) accum)))
+           accum))
+        ((kons knil str start)
+         (uc-string-fold kons knil str start (uc-string-length str)))
+        ((kons knil str)
+         (uc-string-fold kons knil str 0 (uc-string-length str)))))
 
-    (define (uc-string-fold-right kons knil str)
-      (let* ((bv (bytevec str))
-             (len (bytevec-cpcnt bv))
-             (accum knil))
-        (do ((i (- len 1) (- i 1)))
-            ((= i -1))
-          (set! accum (kons (bytevec-ref bv i) accum)))
-        accum))
+    (define uc-string-fold-right
+      (case-lambda
+        ((kons knil str start end)
+         (let* ((bv (bytevec str))
+                (accum knil)
+                (finish (- start 1)))
+           (do ((i (- end 1) (- i 1)))
+               ((= i finish))
+             (set! accum (kons (bytevec-ref bv i) accum)))
+           accum))
+        ((kons knil str start)
+         (uc-string-fold-right kons knil str start
+                               (uc-string-length str)))
+        ((kons knil str)
+         (uc-string-fold-right kons knil str 0
+                               (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 
