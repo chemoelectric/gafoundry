@@ -36,6 +36,8 @@ CALM1_FLAGS = \
 CHICKEN_INSTALL = chicken-install
 CHICKEN_UNINSTALL = chicken-uninstall
 
+UNIT_TEST_PRETTY = pretty
+
 .PHONY: default all clean maintainer-clean
 default: all
 
@@ -100,6 +102,10 @@ uninstall::
 .PHONY: test install-check
 test install-check::
 	$(CHICKEN_INSTALL) -s -test
+
+.PHONY: unit-test
+unit-test:: unit-tests/unit-test-uc-string.scm
+	unit-tests/unit-test-uc-string.scm $(UNIT_TEST_PRETTY)
 
 clean::
 	-rm -f gafoundry.build.sh

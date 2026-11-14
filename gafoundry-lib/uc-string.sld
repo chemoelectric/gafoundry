@@ -68,6 +68,9 @@
           uc-string-append
           uc-string-concatenate
           uc-string-join
+
+          uc-string-span
+          uc-string-break
           )
 
   (import (scheme base)
@@ -506,6 +509,38 @@
          (string->number (uc-string->string str)))
         ((str radix)
          (string->number (uc-string->string str) radix))))
+
+;;;---------------------------------------------------------------------
+
+    (define (uc-string-span-or-break search str pred start end)
+      (let ((i (search str pred start end)))
+        (if (not i)
+          (values (uc-string-copy str start end)
+                  (make-uc-string 0))
+          (values (uc-string-copy str start i)
+                  (uc-string-copy str i end)))))
+
+    (define uc-string-span
+      (case-lambda
+        ((str pred start end)
+         (uc-string-span-or-break uc-string-skip str pred start end))
+        ((str pred start)
+         (uc-string-span-or-break uc-string-skip str pred start
+                                  (uc-string-length str)))
+        ((str pred)
+         (uc-string-span-or-break uc-string-skip str pred
+                                  0 (uc-string-length str)))))
+
+    (define uc-string-break
+      (case-lambda
+        ((str pred start end)
+         (uc-string-span-or-break uc-string-index str pred start end))
+        ((str pred start)
+         (uc-string-span-or-break uc-string-index str pred start
+                                  (uc-string-length str)))
+        ((str pred)
+         (uc-string-span-or-break uc-string-index str pred
+                                  0 (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 
