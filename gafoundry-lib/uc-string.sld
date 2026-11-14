@@ -71,6 +71,8 @@
 
           uc-string-span
           uc-string-break
+          uc-string-take-while
+          uc-string-drop-while
           )
 
   (import (scheme base)
@@ -512,35 +514,79 @@
 
 ;;;---------------------------------------------------------------------
 
-    (define (uc-string-span-or-break search str pred start end)
+    (define (uc-string-span-break-etc search returns str pred start end)
       (let ((i (search str pred start end)))
-        (if (not i)
-          (values (uc-string-copy str start end)
-                  (make-uc-string 0))
-          (values (uc-string-copy str start i)
-                  (uc-string-copy str i end)))))
+        (case returns
+          ((both)
+           (if (not i)
+             (values (uc-string-copy str start end)
+                     (make-uc-string 0))
+             (values (uc-string-copy str start i)
+                     (uc-string-copy str i end))))
+          ((first)
+           (if (not i)
+             (uc-string-copy str start end)
+             (uc-string-copy str start i)))
+          ((second)
+           (if (not i)
+             (make-uc-string 0)
+             (uc-string-copy str i end))))))
 
     (define uc-string-span
       (case-lambda
         ((str pred start end)
-         (uc-string-span-or-break uc-string-skip str pred start end))
+         (uc-string-span-break-etc uc-string-skip 'both
+                                   str pred start end))
         ((str pred start)
-         (uc-string-span-or-break uc-string-skip str pred start
-                                  (uc-string-length str)))
+         (uc-string-span-break-etc uc-string-skip 'both
+                                   str pred start
+                                   (uc-string-length str)))
         ((str pred)
-         (uc-string-span-or-break uc-string-skip str pred
-                                  0 (uc-string-length str)))))
+         (uc-string-span-break-etc uc-string-skip 'both
+                                   str pred 0
+                                   (uc-string-length str)))))
 
     (define uc-string-break
       (case-lambda
         ((str pred start end)
-         (uc-string-span-or-break uc-string-index str pred start end))
+         (uc-string-span-break-etc uc-string-index 'both
+                                   str pred start end))
         ((str pred start)
-         (uc-string-span-or-break uc-string-index str pred start
-                                  (uc-string-length str)))
+         (uc-string-span-break-etc uc-string-index 'both
+                                   str pred start
+                                   (uc-string-length str)))
         ((str pred)
-         (uc-string-span-or-break uc-string-index str pred
-                                  0 (uc-string-length str)))))
+         (uc-string-span-break-etc uc-string-index 'both
+                                   str pred 0
+                                   (uc-string-length str)))))
+
+    (define uc-string-take-while
+      (case-lambda
+        ((str pred start end)
+         (uc-string-span-break-etc uc-string-skip 'first
+                                   str pred start end))
+        ((str pred start)
+         (uc-string-span-break-etc uc-string-skip 'first
+                                   str pred start
+                                   (uc-string-length str)))
+        ((str pred)
+         (uc-string-span-break-etc uc-string-skip 'first
+                                   str pred 0
+                                   (uc-string-length str)))))
+
+    (define uc-string-drop-while
+      (case-lambda
+        ((str pred start end)
+         (uc-string-span-break-etc uc-string-skip 'second
+                                   str pred start end))
+        ((str pred start)
+         (uc-string-span-break-etc uc-string-skip 'second
+                                   str pred start
+                                   (uc-string-length str)))
+        ((str pred)
+         (uc-string-span-break-etc uc-string-skip 'second
+                                   str pred 0
+                                   (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 
