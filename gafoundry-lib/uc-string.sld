@@ -883,12 +883,8 @@
       (case-lambda
         ((str len char start end)
          (let ((result (make-uc-string len char))
-               (finish (- start 1)))
-           (do ((i (- end 1) (- i 1))
-                (j (- len 1) (- j 1)))
-               ((or (= i finish)
-                    (= j -1)))
-             (uc-string-set! result j (uc-string-ref str i)))
+               (ncopy (min (- end start) len)))
+           (uc-string-copy! result (- len ncopy) str (- end ncopy) end)
            result))
         ((str len char start)
          (uc-string-pad str len char
@@ -903,12 +899,9 @@
     (define uc-string-pad-right
       (case-lambda
         ((str len char start end)
-         (let ((result (make-uc-string len char)))
-           (do ((i start (+ i 1))
-                (j 0 (+ j 1)))
-               ((or (= i end)
-                    (= j len)))
-             (uc-string-set! result j (uc-string-ref str i)))
+         (let ((result (make-uc-string len char))
+               (ncopy (min (- end start) len)))
+           (uc-string-copy! result 0 str start (+ start ncopy))
            result))
         ((str len char start)
          (uc-string-pad-right str len char
