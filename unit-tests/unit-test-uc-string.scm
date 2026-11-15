@@ -618,6 +618,42 @@
 (check (= 1 (uc-string-contains-right
              (string->uc-string "eek -- what a geek.")
              (string->uc-string "ek") 0 17)))
+(check (uc-string=? (string->uc-string "  325")
+                    (uc-string-pad (string->uc-string "325") 5)))
+(check (uc-string=? (string->uc-string "71325")
+                    (uc-string-pad (string->uc-string "71325") 5)))
+(check (uc-string=? (string->uc-string "71325")
+                    (uc-string-pad (string->uc-string "8871325") 5)))
+(check (uc-string=? (string->uc-string "...25")
+                    (uc-string-pad (string->uc-string "8871325")
+                                   5 #\. 5)))
+(check (uc-string=? (string->uc-string "....2")
+                    (uc-string-pad (string->uc-string "8871325")
+                                   5 #\. 5 6)))
+(check (uc-string=? (string->uc-string ".....")
+                    (uc-string-pad (string->uc-string "8871325")
+                                   5 #\. 5 5)))
+(check (uc-string=? (string->uc-string "325  ")
+                    (uc-string-pad-right
+                     (string->uc-string "325") 5)))
+(check (uc-string=? (string->uc-string "71325")
+                    (uc-string-pad-right
+                     (string->uc-string "71325") 5)))
+(check (uc-string=? (string->uc-string "88713")
+                    (uc-string-pad-right
+                     (string->uc-string "8871325") 5)))
+(check (uc-string=? (string->uc-string "25...")
+                    (uc-string-pad-right
+                     (string->uc-string "8871325")
+                     5 #\. 5)))
+(check (uc-string=? (string->uc-string "2....")
+                    (uc-string-pad-right
+                     (string->uc-string "8871325")
+                     5 #\. 5 6)))
+(check (uc-string=? (string->uc-string ".....")
+                    (uc-string-pad-right
+                     (string->uc-string "8871325")
+                     5 #\. 5 5)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

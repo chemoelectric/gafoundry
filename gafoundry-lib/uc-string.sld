@@ -83,6 +83,9 @@
 
           uc-string-contains
           uc-string-contains-right
+
+          uc-string-pad
+          uc-string-pad-right
           )
 
   (import (scheme base)
@@ -873,6 +876,49 @@
           text pattern
           text-start text-end
           pattern-start pattern-end))))
+
+;;;---------------------------------------------------------------------
+
+    (define uc-string-pad
+      (case-lambda
+        ((str len char start end)
+         (let ((result (make-uc-string len char))
+               (finish (- start 1)))
+           (do ((i (- end 1) (- i 1))
+                (j (- len 1) (- j 1)))
+               ((or (= i finish)
+                    (= j -1)))
+             (uc-string-set! result j (uc-string-ref str i)))
+           result))
+        ((str len char start)
+         (uc-string-pad str len char
+                        start (uc-string-length str)))
+        ((str len char)
+         (uc-string-pad str len char
+                        0 (uc-string-length str)))
+        ((str len)
+         (uc-string-pad str len #\space
+                        0 (uc-string-length str)))))
+
+    (define uc-string-pad-right
+      (case-lambda
+        ((str len char start end)
+         (let ((result (make-uc-string len char)))
+           (do ((i start (+ i 1))
+                (j 0 (+ j 1)))
+               ((or (= i end)
+                    (= j len)))
+             (uc-string-set! result j (uc-string-ref str i)))
+           result))
+        ((str len char start)
+         (uc-string-pad-right str len char
+                              start (uc-string-length str)))
+        ((str len char)
+         (uc-string-pad-right str len char
+                              0 (uc-string-length str)))
+        ((str len)
+         (uc-string-pad-right str len #\space
+                              0 (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 
