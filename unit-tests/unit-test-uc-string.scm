@@ -808,6 +808,13 @@
 (check (uc-string=?
         (string->uc-string "abcabca")
         (uc-string-replicate (string->uc-string "xxxabcxxx") 0 7 3 6)))
+(check (uc-string=?
+        (string->uc-string "")
+        (uc-string-replicate (string->uc-string "") 0 0)))
+(check (uc-string=?
+        (string->uc-string "")
+        (uc-string-replicate (string->uc-string "fred flintstone")
+                             7 7 5 5)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
