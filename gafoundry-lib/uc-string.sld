@@ -93,6 +93,7 @@
           uc-string-pad-right
 
           uc-string-segment
+          uc-string-replicate
           )
 
   (import (scheme base)
@@ -165,13 +166,16 @@
       (constructor>
        make-uc-string
        (lambda (construct)
-         (lambda (len char)
-           (let* ((ichar (char->integer char))
-                  (bv (make-bytevector (* len 4))))
-             (do ((i 0 (+ i 1)))
-                 ((= i len))
-               (bytevector-u32-set! bv (* i 4) ichar (endianness)))
-             (construct bv)))))
+         (case-lambda
+           ((len char)
+            (let* ((ichar (char->integer char))
+                   (bv (make-bytevector (* len 4))))
+              (do ((i 0 (+ i 1)))
+                  ((= i len))
+                (bytevector-u32-set! bv (* i 4) ichar (endianness)))
+              (construct bv)))
+           ((len)
+            (construct (make-bytevector (* len 4)))))))
 
       (constructor>
        uc-string-tabulate
@@ -1051,6 +1055,57 @@
                 (set-cdr! p (list (uc-string-copy
                                    str i (min len (+ i k))))))
               (cdr lst))))))
+
+    (define uc-string-replicate
+      (let ((nullstr (make-uc-string 0 #\null)))
+        (case-lambda
+          ((str from to start end)
+           (check-substring-bounds str start end)
+           (let ((len (uc-string-length str)))
+             (unless (<= from to)
+               (error "invalid replication bounds" from to))
+             (let ((sub-len (- end start))
+                   (out-len (- to from)))
+               (cond
+                 ((zero? out-len) nullstr)
+                 ((zero? sub-len)
+                  (error "cannot replicate an empty substring" from to))
+                 (else
+                  (let* ((result (make-uc-string out-len))
+                         (offset (floor-remainder from sub-len))
+                         (first-len (min out-len (- sub-len offset)))
+                         (copied 0))
+
+                    ;; Copy the tail of the first period (offset to
+                    ;; end).
+                    (uc-string-copy! result 0 str (+ start offset)
+                                     (+ start offset first-len))
+                    (set! copied (+ copied first-len))
+
+                    (when (< first-len out-len)
+                      ;; Copy the head of the first period (start to
+                      ;; offset).
+                      (let ((second-len
+                             (min (- out-len first-len) offset)))
+                        (uc-string-copy! result first-len str
+                                         start (+ start second-len))
+                        (set! copied (+ copied second-len))))
+
+                    ;; Use exponential doubling to fill the rest.
+                    (let loop ((copied copied))
+                      (if (= copied out-len)
+                        result
+                        (let ((chunk (min copied (- out-len copied))))
+                          (uc-string-copy! result copied result 0 chunk)
+                          (loop (+ copied chunk)))))))))))
+
+          ((str from to start)
+           (uc-string-replicate str from to
+                                start (uc-string-length str)))
+
+          ((str from to)
+           (uc-string-replicate str from to
+                                0 (uc-string-length str))))))
 
 ;;;---------------------------------------------------------------------
 

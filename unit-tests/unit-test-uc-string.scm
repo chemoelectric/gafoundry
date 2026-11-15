@@ -62,11 +62,11 @@
      (not (apply pred arg*)))))
 
 (check (not (uc-string? 3)))
-(check (uc-string? (make-uc-string 3 #\null)))
-(check (uc-string-null? (make-uc-string 0 #\null)))
-(check (not (uc-string-null? (make-uc-string 3 #\null))))
-(check (zero? (uc-string-length (make-uc-string 0 #\null))))
-(check (= 3 (uc-string-length (make-uc-string 3 #\null))))
+(check (uc-string? (make-uc-string 3)))
+(check (uc-string-null? (make-uc-string 0)))
+(check (not (uc-string-null? (make-uc-string 3))))
+(check (zero? (uc-string-length (make-uc-string 0))))
+(check (= 3 (uc-string-length (make-uc-string 3))))
 (check (uc-string-null? (uc-string)))
 (check (= 3 (uc-string-length (uc-string #\a #\b #\c))))
 (check (= 3 (uc-string-length (list->uc-string '(#\a #\b #\c)))))
@@ -793,6 +793,21 @@
         (map uc-string->string
              (uc-string-segment
               (string->uc-string "fred flintstone") 3))))
+(check (uc-string=?
+        (string->uc-string "cdefab")
+        (uc-string-replicate (string->uc-string "abcdef") 2 8)))
+(check (uc-string=?
+        (string->uc-string "efabcd")
+        (uc-string-replicate (string->uc-string "abcdef") -2 4)))
+(check (uc-string=?
+        (string->uc-string "abcabca")
+        (uc-string-replicate (string->uc-string "abc") 0 7)))
+(check (uc-string=?
+        (string->uc-string "abcabca")
+        (uc-string-replicate (string->uc-string "xxxabc") 0 7 3)))
+(check (uc-string=?
+        (string->uc-string "abcabca")
+        (uc-string-replicate (string->uc-string "xxxabcxxx") 0 7 3 6)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
