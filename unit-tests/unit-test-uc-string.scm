@@ -62,11 +62,11 @@
      (not (apply pred arg*)))))
 
 (check (not (uc-string? 3)))
-(check (uc-string? (make-uc-string 3)))
-(check (uc-string-null? (make-uc-string 0)))
-(check (not (uc-string-null? (make-uc-string 3))))
-(check (zero? (uc-string-length (make-uc-string 0))))
-(check (= 3 (uc-string-length (make-uc-string 3))))
+(check (uc-string? (make-uc-string 3 #\null)))
+(check (uc-string-null? (make-uc-string 0 #\null)))
+(check (not (uc-string-null? (make-uc-string 3 #\null))))
+(check (zero? (uc-string-length (make-uc-string 0 #\null))))
+(check (= 3 (uc-string-length (make-uc-string 3 #\null))))
 (check (uc-string-null? (uc-string)))
 (check (= 3 (uc-string-length (uc-string #\a #\b #\c))))
 (check (= 3 (uc-string-length (list->uc-string '(#\a #\b #\c)))))
@@ -694,6 +694,9 @@
                                  (string->uc-string "  12.4  ") 2 6)))
 (check (equal? #\1 (uc-string-any (lambda (x) x)
                                   (string->uc-string "1234"))))
+(check (uc-string-null? (uc-string-tabulate integer->char 0)))
+(check (uc-string=? (uc-string #\null #\x1 #\x2 #\x3 #\x4)
+                    (uc-string-tabulate integer->char 5)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

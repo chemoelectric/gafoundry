@@ -31,7 +31,7 @@
           uc-string-any
 
           make-uc-string
-
+          uc-string-tabulate
           uc-string
 
           list->uc-string
@@ -155,23 +155,32 @@
       (constructor>
        make-uc-string
        (lambda (construct)
-         (case-lambda
-           ((len)
-            (construct (make-bytevector (* len 4) 0)))
-           ((len char)
-            (let* ((ichar (char->integer char))
-                   (bv (make-bytevector (* len 4) 0)))
-              (do ((i 0 (+ i 1)))
-                  ((= i len))
-                (bytevector-u32-set! bv (* i 4) ichar (endianness)))
-              (construct bv))))))
+         (lambda (len char)
+           (let* ((ichar (char->integer char))
+                  (bv (make-bytevector (* len 4))))
+             (do ((i 0 (+ i 1)))
+                 ((= i len))
+               (bytevector-u32-set! bv (* i 4) ichar (endianness)))
+             (construct bv)))))
+
+      (constructor>
+       uc-string-tabulate
+       (lambda (construct)
+         (lambda (proc len)
+           (let ((bv (make-bytevector (* len 4))))
+             (do ((i 0 (+ i 1)))
+                 ((= i len))
+               (bytevector-u32-set! bv (* i 4)
+                                    (char->integer (proc i))
+                                    (endianness)))
+             (construct bv)))))
 
       (constructor>
        list->uc-string
        (lambda (construct)
          (lambda (lst)
            (let* ((len (length lst))
-                  (bv (make-bytevector (* len 4) 0)))
+                  (bv (make-bytevector (* len 4))))
              (do ((p lst (cdr p))
                   (i 0 (+ i 1)))
                  ((not-pair? p))
@@ -184,7 +193,7 @@
        (lambda (construct)
          (lambda (lst)
            (let* ((len (length lst))
-                  (bv (make-bytevector (* len 4) 0)))
+                  (bv (make-bytevector (* len 4))))
              (do ((p lst (cdr p))
                   (i (- len 1) (- i 1)))
                  ((not-pair? p))
