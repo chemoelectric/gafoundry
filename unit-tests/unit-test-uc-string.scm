@@ -736,6 +736,47 @@
                        "wilma and fred flintstone: eof")
                       (port->uc-string f)))
   (close-input-port f))
+(check (uc-string=?
+        (string->uc-string " The English alphabet: \
+                            abcdefghijklmnopqrstuvwxyz ")
+        (uc-string-unfold-right
+         (lambda (n) (= (+ n 1) (char->integer #\A)))
+         (lambda (n) (char-downcase (integer->char n)))
+         (lambda (n) (- n 1))
+         (char->integer #\Z)
+         #\space
+         (lambda (n) " The English alphabet: "))))
+(check (uc-string=?
+        (string->uc-string "abcdefghijklmnopqrstuvwxyz ")
+        (uc-string-unfold-right
+         (lambda (n) (= (+ n 1) (char->integer #\A)))
+         (lambda (n) (char-downcase (integer->char n)))
+         (lambda (n) (- n 1))
+         (char->integer #\Z)
+         #\space)))
+(check (uc-string=?
+        (string->uc-string "abcdefghijklmnopqrstuvwxyz")
+        (uc-string-unfold-right
+         (lambda (n) (= (+ n 1) (char->integer #\A)))
+         (lambda (n) (char-downcase (integer->char n)))
+         (lambda (n) (- n 1))
+         (char->integer #\Z))))
+(check (uc-string=?
+        (string->uc-string "0123456789")
+        (uc-string-unfold-right
+         (lambda (n) (zero? (+ n 1)))
+         (lambda (n) (number->string n))
+         (lambda (n) (- n 1))
+         9)))
+(check (uc-string=?
+        (string->uc-string "00112233445566778899")
+        (uc-string-unfold-right
+         (lambda (n) (zero? (+ n 1)))
+         (lambda (n) (uc-string-append
+                      (number->uc-string n)
+                      (number->uc-string n)))
+         (lambda (n) (- n 1))
+         9)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
