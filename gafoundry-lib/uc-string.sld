@@ -27,6 +27,9 @@
           uc-string-null?
           uc-string-length
 
+          uc-string-every
+          uc-string-any
+
           make-uc-string
 
           uc-string
@@ -136,6 +139,13 @@
     (define (bytevec-cpcnt bv) ;; “Code point count”
       (truncate-quotient (bytevector-length bv) 4))
 
+    (define (check-substring-bounds str start end)
+      (unless (and (<= 0 start)
+                   (<= start end)
+                   (<= end (uc-string-length str)))
+        (error "expected 0 <= start <= end <= (uc-string-length string)"
+               start end (uc-string-length str))))
+
 ;;;---------------------------------------------------------------------
 
     (define-record-factory <uc-string>
@@ -197,6 +207,7 @@
            ((str start)
             (construct (bytevector-copy (bytevec str) (* start 4))))
            ((str start end)
+            (check-substring-bounds str start end)
             (construct (bytevector-copy (bytevec str)
                                         (* start 4) (* end 4)))))))
 
@@ -383,8 +394,7 @@
     (define uc-string-fold
       (case-lambda
         ((kons knil str start end)
-         (unless (<= start end)
-           (error "start must come before or at end" start end))
+         (check-substring-bounds str start end)
          (let* ((bv (bytevec str))
                 (accum knil))
            (do ((i start (+ i 1)))
@@ -399,6 +409,7 @@
     (define uc-string-fold-right
       (case-lambda
         ((kons knil str start end)
+         (check-substring-bounds str start end)
          (let* ((bv (bytevec str))
                 (accum knil)
                 (finish (- start 1)))
@@ -433,6 +444,7 @@
     (define uc-string-index
       (case-lambda
         ((str pred start end)
+         (check-substring-bounds str start end)
          (let ((bv (bytevec str)))
            (let loop ((i start))
              (cond ((= i end) #f)
@@ -446,6 +458,7 @@
     (define uc-string-index-right
       (case-lambda 
         ((str pred start end)
+         (check-substring-bounds str start end)
          (let ((bv (bytevec str))
                (finish (- start 1)))
            (let loop ((i (- end 1)))
@@ -460,6 +473,7 @@
     (define uc-string-skip
       (case-lambda
         ((str pred start end)
+         (check-substring-bounds str start end)
          (let ((bv (bytevec str)))
            (let loop ((i start))
              (cond ((= i end) #f)
@@ -473,6 +487,7 @@
     (define uc-string-skip-right
       (case-lambda 
         ((str pred start end)
+         (check-substring-bounds str start end)
          (let ((bv (bytevec str))
                (finish (- start 1)))
            (let loop ((i (- end 1)))
@@ -529,6 +544,7 @@
 ;;;---------------------------------------------------------------------
 
     (define (uc-string-span-break-etc search returns str pred start end)
+      (check-substring-bounds str start end)
       (let ((i (search str pred start end)))
         (case returns
           ((both)
@@ -744,6 +760,8 @@
     (define (knuth-morris-pratt-search text pattern
                                        text-start text-end
                                        pattern-start pattern-end)
+      (check-substring-bounds text text-start text-end)
+      (check-substring-bounds pattern pattern-start pattern-end)
       (let* ((sub-pattern
               (if (and (zero? pattern-start)
                        (= pattern-end (uc-string-length pattern)))
@@ -823,6 +841,8 @@
     (define (knuth-morris-pratt-search-right text pattern
                                              text-start text-end
                                              pattern-start pattern-end)
+      (check-substring-bounds text text-start text-end)
+      (check-substring-bounds pattern pattern-start pattern-end)
       (let* ((sub-pattern
               (if (and (zero? pattern-start)
                        (= pattern-end (uc-string-length pattern)))
@@ -882,6 +902,7 @@
     (define uc-string-pad
       (case-lambda
         ((str len char start end)
+         (check-substring-bounds str start end)
          (let ((result (make-uc-string len char))
                (ncopy (min (- end start) len)))
            (uc-string-copy! result (- len ncopy) str (- end ncopy) end)
@@ -899,6 +920,7 @@
     (define uc-string-pad-right
       (case-lambda
         ((str len char start end)
+         (check-substring-bounds str start end)
          (let ((result (make-uc-string len char))
                (ncopy (min (- end start) len)))
            (uc-string-copy! result 0 str start (+ start ncopy))
@@ -912,6 +934,38 @@
         ((str len)
          (uc-string-pad-right str len #\space
                               0 (uc-string-length str)))))
+
+;;;---------------------------------------------------------------------
+
+    (define uc-string-every
+      (case-lambda
+        ((pred str start end)
+         (check-substring-bounds str start end)
+         (if (= start end)
+           #t
+           (let loop ((i start)
+                      (result #f))
+             (cond ((= i end) result)
+                   ((pred (uc-string-ref str i)) =>
+                    (lambda (obj) (loop (+ i 1) obj)))
+                   (else #f)))))
+        ((pred str start)
+         (uc-string-every pred str start (uc-string-length str)))
+        ((pred str)
+         (uc-string-every pred str 0 (uc-string-length str)))))
+
+    (define uc-string-any
+      (case-lambda
+        ((pred str start end)
+         (check-substring-bounds str start end)
+         (let loop ((i start))
+           (cond ((= i end) #f)
+                 ((pred (uc-string-ref str i)) => values)
+                 (else (loop (+ i 1))))))
+        ((pred str start)
+         (uc-string-any pred str start (uc-string-length str)))
+        ((pred str)
+         (uc-string-any pred str 0 (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 

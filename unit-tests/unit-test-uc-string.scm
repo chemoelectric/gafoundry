@@ -654,6 +654,46 @@
                     (uc-string-pad-right
                      (string->uc-string "8871325")
                      5 #\. 5 5)))
+(check (uc-string-every char-numeric?
+                        (string->uc-string "")))
+(check (uc-string-every char-numeric?
+                        (string->uc-string "") 0))
+(check (uc-string-every char-numeric?
+                        (string->uc-string "") 0 0))
+(check (equal? #t (uc-string-every char-numeric?
+                                   (string->uc-string "1234"))))
+(check (equal? #t (uc-string-every char-numeric?
+                                   (string->uc-string "  1234") 2)))
+(check (equal? #t (uc-string-every char-numeric?
+                                   (string->uc-string "  1234  ") 2 6)))
+(check (not (uc-string-every char-numeric?
+                             (string->uc-string "12.4"))))
+(check (not (uc-string-every char-numeric?
+                             (string->uc-string "  12.4") 2)))
+(check (not (uc-string-every char-numeric?
+                             (string->uc-string "  12.4  ") 2 6)))
+(check (equal? #\4 (uc-string-every (lambda (x) x)
+                                    (string->uc-string "1234"))))
+(check (not (uc-string-any (complement char-numeric?)
+                           (string->uc-string ""))))
+(check (not (uc-string-any (complement char-numeric?)
+                           (string->uc-string "") 0)))
+(check (not (uc-string-any (complement char-numeric?)
+                           (string->uc-string "") 0 0)))
+(check (not (uc-string-any (complement char-numeric?)
+                           (string->uc-string "1234"))))
+(check (not (uc-string-any (complement char-numeric?)
+                           (string->uc-string "  1234") 2)))
+(check (not (uc-string-any (complement char-numeric?)
+                           (string->uc-string "  1234  ") 2 6)))
+(check (equal? #t (uc-string-any (complement char-numeric?)
+                                 (string->uc-string "12.4"))))
+(check (equal? #t (uc-string-any (complement char-numeric?)
+                                 (string->uc-string "  12.4") 2)))
+(check (equal? #t (uc-string-any (complement char-numeric?)
+                                 (string->uc-string "  12.4  ") 2 6)))
+(check (equal? #\1 (uc-string-any (lambda (x) x)
+                                  (string->uc-string "1234"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
