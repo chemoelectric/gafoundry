@@ -524,14 +524,14 @@
               (string->uc-string "eek -- what a geek.")
               (string->uc-string "cheese") 12 18 2 4)))
 (check (= 0 (uc-string-contains
-              (string->uc-string "eek -- what a geek.")
-              (string->uc-string "eek -- what a geek."))))
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "eek -- what a geek."))))
 (check (not (uc-string-contains
-              (string->uc-string "eek -- what a geek.")
-              (string->uc-string "eek -- what a jeek."))))
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "eek -- what a jeek."))))
 (check (not (uc-string-contains
-              (string->uc-string "eek -- what a geek.")
-              (string->uc-string "@"))))
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "@"))))
 (check (= 0 (uc-string-contains
              (string->uc-string "eek -- what a geek.")
              (string->uc-string ""))))
@@ -541,6 +541,30 @@
 (check (= 4 (uc-string-contains
              (string->uc-string "eek -- what a geek.")
              (string->uc-string "--"))))
+(check (= 15 (uc-string-contains-right
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "ee"))))
+(check (= 0 (uc-string-contains-right
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "ee") 0 16)))
+(check (= 19 (uc-string-contains-right
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string ""))))
+(check (= 0 (uc-string-contains-right
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "eek -- what a geek."))))
+(check (= 4 (uc-string-contains-right
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "eek -- what a geek.") 0 19 4 6)))
+(check (= 17 (uc-string-contains-right
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "k"))))
+(check (= 2 (uc-string-contains-right
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "k") 0 17)))
+(check (= 1 (uc-string-contains-right
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "ek") 0 17)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
