@@ -517,6 +517,30 @@
                (complement char-alphabetic?) 1 10)))
   (check (uc-string=? s (string->uc-string "red ")))
   (check (uc-string=? t (string->uc-string "flint"))))
+(check (= 15 (uc-string-contains
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "ee") 12 18)))
+(check (= 15 (uc-string-contains
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "cheese") 12 18 2 4)))
+(check (= 0 (uc-string-contains
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "eek -- what a geek."))))
+(check (not (uc-string-contains
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "eek -- what a jeek."))))
+(check (not (uc-string-contains
+              (string->uc-string "eek -- what a geek.")
+              (string->uc-string "@"))))
+(check (= 0 (uc-string-contains
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string ""))))
+(check (= 4 (uc-string-contains
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "-"))))
+(check (= 4 (uc-string-contains
+             (string->uc-string "eek -- what a geek.")
+             (string->uc-string "--"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

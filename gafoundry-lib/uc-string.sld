@@ -77,6 +77,8 @@
           uc-string-span-right
           uc-string-break
           uc-string-break-right
+
+          uc-string-contains
           )
 
   (import (scheme base)
@@ -672,6 +674,81 @@
            (uc-string-span-break-etc search 'first
                                      str pred 0
                                      (uc-string-length str))))))
+
+;;;---------------------------------------------------------------------
+
+    (define (make-knuth-morris-pratt-table pattern)
+      (let* ((m (uc-string-length pattern))
+             (longest-proper-prefix-suffix (make-vector m 0)))
+        (if (zero? m)
+          longest-proper-prefix-suffix
+          (let loop ((i 1)
+                     (len 0))
+            (cond
+              ((= i m) longest-proper-prefix-suffix)
+              ((char=? (uc-string-ref pattern i)
+                       (uc-string-ref pattern len))
+               (vector-set! longest-proper-prefix-suffix i (+ len 1))
+               (loop (+ i 1) (+ len 1)))
+              ((zero? len)
+               (vector-set! longest-proper-prefix-suffix i 0)
+               (loop (+ i 1) 0))
+              (else
+               (loop i (vector-ref longest-proper-prefix-suffix
+                                   (- len 1)))))))))
+
+    (define (knuth-morris-pratt-search text pattern
+                                       text-start text-end
+                                       pattern-start pattern-end)
+      (let* ((sub-pattern
+              (if (and (= pattern-start 0)
+                       (= pattern-end (uc-string-length pattern)))
+                pattern
+                (uc-string-copy pattern pattern-start pattern-end)))
+             (m (uc-string-length sub-pattern)))
+        (cond
+          ((zero? m) text-start)
+          ((< (- text-end text-start) m) #f)
+          (else
+           (let ((longest-proper-prefix-suffix
+                  (make-knuth-morris-pratt-table sub-pattern)))
+             (let loop ((i text-start)
+                        (j 0))
+               (cond
+                 ((= j m) (- i m))
+                 ((>= i text-end) #f)
+                 ((char=? (uc-string-ref text i)
+                          (uc-string-ref sub-pattern j))
+                  (loop (+ i 1) (+ j 1)))
+                 ((zero? j)
+                  (loop (+ i 1) 0))
+                 (else
+                  (loop i (vector-ref longest-proper-prefix-suffix
+                                      (- j 1)))))))))))
+
+    (define uc-string-contains
+      (case-lambda
+        ((text pattern)
+         (knuth-morris-pratt-search text pattern
+                                    0 (uc-string-length text)
+                                    0 (uc-string-length pattern)))
+        ((text pattern text-start)
+         (knuth-morris-pratt-search text pattern
+                                    text-start (uc-string-length text)
+                                    0 (uc-string-length pattern)))
+        ((text pattern text-start text-end)
+         (knuth-morris-pratt-search text pattern
+                                    text-start text-end
+                                    0 (uc-string-length pattern)))
+        ((text pattern text-start text-end pattern-start)
+         (knuth-morris-pratt-search text pattern
+                                    text-start text-end
+                                    pattern-start
+                                    (uc-string-length pattern)))
+        ((text pattern text-start text-end pattern-start pattern-end)
+         (knuth-morris-pratt-search text pattern
+                                    text-start text-end
+                                    pattern-start pattern-end))))
 
 ;;;---------------------------------------------------------------------
 
