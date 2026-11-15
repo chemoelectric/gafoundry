@@ -32,8 +32,9 @@
 
           make-uc-string
           uc-string-tabulate
-          uc-string
+          uc-string-unfold
 
+          uc-string
           list->uc-string
           uc-string->list
           reverse-list->uc-string
@@ -145,6 +146,12 @@
                    (<= end (uc-string-length str)))
         (error "expected 0 <= start <= end <= (uc-string-length string)"
                start end (uc-string-length str))))
+
+    (define (->uc-string obj)
+      (cond ((uc-string? obj) obj)
+            ((char? obj) (uc-string obj))
+            ((string? obj) (string->uc-string obj))
+            (else (error "expected uc-string, string, or char" obj))))
 
 ;;;---------------------------------------------------------------------
 
@@ -365,8 +372,7 @@
            (do ((i 0 (+ i 1))
                 (p lst (cdr p)))
                ((= i len))
-             (let* ((elem (proc (uc-string-ref str i)))
-                    (elem (if (char? elem) (uc-string elem) elem)))
+             (let ((elem (->uc-string (proc (uc-string-ref str i)))))
                (set-cdr! p (list elem))))
            (uc-string-concatenate (cdr lst))))
         ((proc str . str*)
@@ -376,10 +382,10 @@
            (do ((i 0 (+ i 1))
                 (p lst (cdr p)))
                ((= i len))
-             (let* ((elem (apply proc (map (lambda (s)
+             (let ((elem (->uc-string
+                          (apply proc (map (lambda (s)
                                              (uc-string-ref s i))
-                                           str*)))
-                    (elem (if (char? elem) (uc-string elem) elem)))
+                                           str*)))))
                (set-cdr! p (list elem))))
            (uc-string-concatenate (cdr lst))))))
 
@@ -397,6 +403,34 @@
                ((= i len))
              (apply proc (map (lambda (s) (uc-string-ref s i))
                               str*)))))))
+
+    (define uc-string-unfold
+      (let* ((nullstr (make-uc-string 0 #\null))
+             (default-make-final (lambda (x) nullstr)))
+        (define (strunfold stop? mapper successor seed
+                           base make-final)
+          (let ((lst (list #f)))
+            (let loop ((seed seed)
+                       (p lst))
+              (if (stop? seed)
+                (let ((final (make-final seed)))
+                  (uc-string-concatenate
+                   `(,(->uc-string base)
+                     ,@(cdr lst)
+                     ,(->uc-string final))))
+                (let ((str (->uc-string (mapper seed))))
+                  (set-cdr! p (list str))
+                  (loop (successor seed) (cdr p)))))))
+        (case-lambda
+          ((stop? mapper successor seed base make-final)
+           (strunfold stop? mapper successor seed
+                      base make-final))
+          ((stop? mapper successor seed base)
+           (strunfold stop? mapper successor seed
+                      base default-make-final))
+          ((stop? mapper successor seed)
+           (strunfold stop? mapper successor seed
+                      nullstr default-make-final)))))
 
 ;;;---------------------------------------------------------------------
 

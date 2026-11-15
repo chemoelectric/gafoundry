@@ -159,6 +159,11 @@
                                      (uc-string ch1 ch2))
                                    (string->uc-string "12345678")
                                    (string->uc-string "abcde"))))
+(check (uc-string=? (string->uc-string "1a2b3c4d5e")
+                    (uc-string-map (lambda (ch1 ch2)
+                                     (string ch1 ch2))
+                                   (string->uc-string "12345678")
+                                   (string->uc-string "abcde"))))
 (let ((vec (make-vector 5))
       (i 0))
   (uc-string-for-each (lambda (ch)
@@ -697,6 +702,40 @@
 (check (uc-string-null? (uc-string-tabulate integer->char 0)))
 (check (uc-string=? (uc-string #\null #\x1 #\x2 #\x3 #\x4)
                     (uc-string-tabulate integer->char 5)))
+(let ((port->uc-string
+       (lambda (port)
+         (uc-string-unfold eof-object? values
+                           (lambda (x) (read-char port))
+                           (read-char port))))
+      (f (open-input-string "fred flintstone")))
+  (check (uc-string=? (string->uc-string "fred flintstone")
+                      (port->uc-string f)))
+  (close-input-port f))
+(let ((port->uc-string
+       (lambda (port)
+         (uc-string-unfold eof-object? values
+                           (lambda (x) (read-char port))
+                           (read-char port)
+                           #\:)))
+      (f (open-input-string "fred flintstone")))
+  (check (uc-string=? (string->uc-string ":fred flintstone")
+                      (port->uc-string f)))
+  (close-input-port f))
+(let ((port->uc-string
+       (lambda (port)
+         (uc-string-unfold eof-object? values
+                           (lambda (x) (read-char port))
+                           (read-char port)
+                           "wilma and "
+                           (lambda (x)
+                             (if (eof-object? x)
+                               ": eof"
+                               ": not eof")))))
+      (f (open-input-string "fred flintstone")))
+  (check (uc-string=? (string->uc-string
+                       "wilma and fred flintstone: eof")
+                      (port->uc-string f)))
+  (close-input-port f))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
