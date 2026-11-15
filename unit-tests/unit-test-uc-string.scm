@@ -777,6 +777,22 @@
                       (number->uc-string n)))
          (lambda (n) (- n 1))
          9)))
+(check (null? (uc-string-segment (make-uc-string 0 #\null) 1)))
+(check (equal?
+        '("f" "r" "e" "d" " " "f" "l" "i" "n" "t" "s" "t" "o" "n" "e")
+        (map uc-string->string
+             (uc-string-segment
+              (string->uc-string "fred flintstone") 1))))
+(check (equal?
+        '("fr" "ed" " f" "li" "nt" "st" "on" "e")
+        (map uc-string->string
+             (uc-string-segment
+              (string->uc-string "fred flintstone") 2))))
+(check (equal?
+        '("fre" "d f" "lin" "tst" "one")
+        (map uc-string->string
+             (uc-string-segment
+              (string->uc-string "fred flintstone") 3))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

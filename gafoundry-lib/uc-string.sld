@@ -91,6 +91,8 @@
 
           uc-string-pad
           uc-string-pad-right
+
+          uc-string-segment
           )
 
   (import (scheme base)
@@ -1032,6 +1034,23 @@
          (uc-string-any pred str start (uc-string-length str)))
         ((pred str)
          (uc-string-any pred str 0 (uc-string-length str)))))
+
+;;;---------------------------------------------------------------------
+
+    (define (uc-string-segment str k)
+      (let ((len (uc-string-length str)))
+        (if (zero? len)
+          '()
+          (begin
+            (unless (positive? k)
+              (error "expected a positive uc-string segment length" k))
+            (let ((lst (list '())))
+              (do ((i 0 (+ i k))
+                   (p lst (cdr p)))
+                  ((<= len i))
+                (set-cdr! p (list (uc-string-copy
+                                   str i (min len (+ i k))))))
+              (cdr lst))))))
 
 ;;;---------------------------------------------------------------------
 
