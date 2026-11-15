@@ -449,6 +449,29 @@
                     (uc-string-drop-while
                      (string->uc-string "fred flintstone")
                      char-alphabetic? 0 14)))
+(check (uc-string=? (string->uc-string " flintstone")
+                    (uc-string-trim
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic?)))
+(check (uc-string=? (string->uc-string " flintstone")
+                    (uc-string-trim
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 4)))
+(check (uc-string=? (string->uc-string "")
+                    (uc-string-trim
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 5)))
+(check (uc-string=? (string->uc-string " flintston")
+                    (uc-string-trim
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 0 14)))
+(check (uc-string=? (string->uc-string " flintston")
+                    (uc-string-trim
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 0 14)))
+(check (uc-string=? (string->uc-string "flintstone")
+                    (uc-string-trim
+                     (string->uc-string "\n\n    \tflintstone"))))
 (check (uc-string=? (string->uc-string "flintstone")
                     (uc-string-take-while-right
                      (string->uc-string "fred flintstone")
@@ -481,6 +504,36 @@
                     (uc-string-drop-while-right
                      (string->uc-string "fred flintstone")
                      char-alphabetic? 0 4)))
+(check (uc-string=? (string->uc-string "fred ")
+                    (uc-string-trim-right
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic?)))
+(check (uc-string=? (string->uc-string "ed ")
+                    (uc-string-trim-right
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 2)))
+(check (uc-string=? (string->uc-string "fred ")
+                    (uc-string-trim-right
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 0 5)))
+(check (uc-string=? (string->uc-string "")
+                    (uc-string-trim-right
+                     (string->uc-string "fred flintstone")
+                     char-alphabetic? 0 4)))
+(check (uc-string=? (string->uc-string "fred")
+                    (uc-string-trim-right
+                     (string->uc-string "fred      \t\t\t\n"))))
+(check (uc-string=? (string->uc-string "fred")
+                    (uc-string-trim-both
+                     (string->uc-string "\r \r \rfred      \t\t\t\n"))))
+(check (uc-string=? (string->uc-string "fred")
+                    (uc-string-trim-both
+                     (string->uc-string "...1234fred1234...")
+                     char-numeric? 3 15)))
+(check (uc-string=? (string->uc-string "fred")
+                    (uc-string-trim-both
+                     (string->uc-string "...1234fred1234567")
+                     char-numeric? 3)))
 (let-values (((s t)
               (uc-string-span-right
                (string->uc-string "fred flintstone")

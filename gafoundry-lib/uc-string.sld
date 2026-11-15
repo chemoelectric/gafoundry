@@ -73,6 +73,9 @@
           uc-string-take-while-right
           uc-string-drop-while
           uc-string-drop-while-right
+          uc-string-trim
+          uc-string-trim-right
+          uc-string-trim-both
           uc-string-span
           uc-string-span-right
           uc-string-break
@@ -84,6 +87,7 @@
 
   (import (scheme base)
           (scheme case-lambda)
+          (scheme char)
           (gafoundry-lib define-record-factory))
   (cond-expand
     ((library (srfi 1))
@@ -675,6 +679,42 @@
            (uc-string-span-break-etc search 'first
                                      str pred 0
                                      (uc-string-length str))))))
+
+    (define uc-string-trim
+      (case-lambda
+        ((str pred start end)
+         (uc-string-drop-while str pred start end))
+        ((str pred start)
+         (uc-string-drop-while str pred start))
+        ((str pred)
+         (uc-string-drop-while str pred))
+        ((str)
+         (uc-string-drop-while str char-whitespace?))))
+
+    (define uc-string-trim-right
+      (case-lambda
+        ((str pred start end)
+         (uc-string-drop-while-right str pred start end))
+        ((str pred start)
+         (uc-string-drop-while-right str pred start))
+        ((str pred)
+         (uc-string-drop-while-right str pred))
+        ((str)
+         (uc-string-drop-while-right str char-whitespace?))))
+
+    (define uc-string-trim-both
+      (case-lambda
+        ((str pred start end)
+         (uc-string-trim-right
+          (uc-string-trim str pred start end)
+          pred))
+        ((str pred start)
+         (uc-string-trim-both str pred start (uc-string-length str)))
+        ((str pred)
+         (uc-string-trim-both str pred 0 (uc-string-length str)))
+        ((str)
+         (uc-string-trim-both str char-whitespace?
+                              0 (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 
