@@ -93,6 +93,7 @@
           uc-string-pad-right
 
           uc-string-segment
+          uc-string-split
           uc-string-replicate
           )
 
@@ -412,7 +413,7 @@
                               str*)))))))
 
     (define uc-string-unfold
-      (let* ((nullstr (make-uc-string 0 #\null))
+      (let* ((nullstr (make-uc-string 0))
              (default-make-final (lambda (x) nullstr)))
         (define (strunfold stop? mapper successor seed
                            base make-final)
@@ -438,7 +439,7 @@
                       nullstr default-make-final)))))
 
     (define uc-string-unfold-right
-      (let* ((nullstr (make-uc-string 0 #\null))
+      (let* ((nullstr (make-uc-string 0))
              (default-make-final (lambda (x) nullstr)))
         (define (strunfold-right stop? mapper successor seed
                                  base make-final)
@@ -1057,7 +1058,7 @@
               (cdr lst))))))
 
     (define uc-string-replicate
-      (let ((nullstr (make-uc-string 0 #\null)))
+      (let ((nullstr (make-uc-string 0)))
         (case-lambda
           ((str from to start end)
            (check-substring-bounds str start end)
@@ -1091,7 +1092,13 @@
                                          start (+ start second-len))
                         (set! copied (+ copied second-len))))
 
-                    ;; Use exponential doubling to fill the rest.
+                    ;; Use geometric doubling to fill the rest: copy
+                    ;; the existing contents, then copy the new longer
+                    ;; contents, then again, etc. (This is not really
+                    ;; exponential-time processing unless the copies
+                    ;; are done in parallel. If the copies remain
+                    ;; serial, the time complexity remains linear, but
+                    ;; actual execution may be faster.)
                     (let loop ((copied copied))
                       (if (= copied out-len)
                         result
@@ -1106,6 +1113,116 @@
           ((str from to)
            (uc-string-replicate str from to
                                 0 (uc-string-length str))))))
+
+    (define uc-string-split
+      (case-lambda
+        ((str delim)
+         (uc-string-split str delim 'infix
+                          #f 0 (uc-string-length str)))
+        ((str delim grammar)
+         (uc-string-split str delim grammar
+                          #f 0 (uc-string-length str)))
+        ((str delim grammar limit)
+         (uc-string-split str delim grammar
+                          limit 0 (uc-string-length str)))
+        ((str delim grammar limit start)
+         (uc-string-split str delim grammar
+                          limit start (uc-string-length str)))
+        ((str delim grammar limit start end)
+
+         (unless (memq grammar '(infix strict-infix prefix suffix))
+           (error "uc-string-split: invalid grammar" grammar))
+         (unless (or (not limit)
+                     (and (exact-integer? limit)
+                          (not (negative? limit))))
+           (error "uc-string-split: limit must be #f or \
+                   a non-negative exact integer" limit))
+
+         (check-substring-bounds str start end)
+
+         ;;
+         ;; The following implementation caches a match index, to
+         ;; avoid a need to call uc-string-contains again.
+         ;;
+         (let* ((delim (->uc-string delim))
+                (delim-len (uc-string-length delim)))
+           (define (is-zero? x)
+             (and x (zero? x)))
+           (define (make-state i more)
+             (vector i more
+                     (and (not (is-zero? more))
+                          (uc-string-contains str delim i end))))
+           (cond
+             ((= start end)
+              ;;
+              ;; An empty string.
+              ;;
+              (when (eq? grammar 'strict-infix)
+                (error "uc-string-split: empty string \
+                        with strict-infix grammar"))
+              '())
+
+             ((zero? delim-len)
+              ;;
+              ;; An empty delimiter splits the string into
+              ;; single-character strings.
+              ;;
+              (unfold
+               (lambda (st)
+                 (or (not st)
+                     (= (car st) end)))
+               (lambda (st)
+                 (let ((i (car st))
+                       (more (cdr st)))
+                   (if (is-zero? more)
+                     (uc-string-copy str i end)
+                     (uc-string (uc-string-ref str i)))))
+               (lambda (st)
+                 (let ((i (car st))
+                       (more (cdr st)))
+                   (if (is-zero? more)
+                     #f
+                     (cons (+ i 1)
+                           (and more (- more 1))))))
+               (cons start limit)))
+
+             (else
+              ;;
+              ;; Split with delimiter.
+              ;;
+              (let ((raw-parts
+                     (unfold
+                      not
+                      (lambda (st)
+                        (let ((i (vector-ref st 0))
+                              (cached-pos (vector-ref st 2)))
+                          (uc-string-copy str i (or cached-pos end))))
+                      (lambda (st)
+                        (let ((more (vector-ref st 1))
+                              (cached-pos (vector-ref st 2)))
+                          (and cached-pos
+                               (make-state (+ cached-pos delim-len)
+                                           (and more (- more 1))))))
+                      (make-state start limit))))
+
+                (case grammar
+                  ((prefix)
+                   ;;
+                   ;; Suppress empty prefixes.
+                   ;;
+                   (if (and (pair? raw-parts)
+                            (uc-string-null? (car raw-parts)))
+                     (cdr raw-parts)
+                     raw-parts))
+                  ((suffix)
+                   ;;
+                   ;; Suppress empty suffixes.
+                   ;;
+                   (if (and (pair? raw-parts)
+                            (uc-string-null? (last raw-parts)))
+                     (drop-right raw-parts 1)
+                     raw-parts))
+                  (else raw-parts)))))))))
 
 ;;;---------------------------------------------------------------------
 

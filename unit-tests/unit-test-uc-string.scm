@@ -288,7 +288,9 @@
 (check (uc-string-null? (uc-string-join
                          '() (string->uc-string ", ") 'infix)))
 (check (guard (condition (#t #t))
-         (uc-string-join '() (string->uc-string ", ") 'strict-infix)))
+         (begin
+           (uc-string-join '() (string->uc-string ", ") 'strict-infix)
+           #f)))
 (check (uc-string=? (string->uc-string "fred, wilma, barney, betty")
                     (uc-string-join
                      `(,(string->uc-string "fred")
@@ -815,6 +817,119 @@
         (string->uc-string "")
         (uc-string-replicate (string->uc-string "fred flintstone")
                              7 7 5 5)))
+(check (null?
+        (map uc-string->string
+             (uc-string-split (string->uc-string "")
+                              (string->uc-string "")))))
+(check (null?
+        (map uc-string->string
+             (uc-string-split (string->uc-string "")
+                              (string->uc-string "anything")))))
+(check (guard (condition (#t #t))
+         (begin
+           (uc-string-split (string->uc-string "")
+                            (string->uc-string "anything")
+                            'strict-infix)
+           #f)))
+(check (equal?
+        '("f" "r" "e" "d" " " "f" "l" "i" "n" "t" "s" "t" "o" "n" "e")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              ""))))
+(check (equal?
+        '("f" "r" "e" "d" " " "flintstone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              "" 'infix 5))))
+(check (equal?
+        '("fr" "d flintston" "")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              "e"))))
+(check (equal?
+        '("fr" "d flintston" "")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\e 'infix))))
+(check (equal?
+        '("fr" "d flintston" "")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\e 'strict-infix))))
+(check (equal?
+        '("fr" "d flintston" "")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\e 'prefix))))
+(check (equal?
+        '("fr" "d flintston")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\e 'suffix))))
+(check (equal?
+        '("" "red " "lintstone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\f))))
+(check (equal?
+        '("" "red " "lintstone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\f 'infix))))
+(check (equal?
+        '("" "red " "lintstone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\f 'strict-infix))))
+(check (equal?
+        '("red " "lintstone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\f 'prefix))))
+(check (equal?
+        '("" "red " "lintstone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string "fred flintstone")
+                              #\f 'suffix))))
+(check (equal?
+        '("wilma" "stone and fred" "stone")
+        (map uc-string->string
+             (uc-string-split (string->uc-string
+                               "wilma flintstone and fred flintstone")
+                              (string->uc-string " flint")))))
+(check (equal?
+        '("wilma" "stone and fred" "stone")
+        (map uc-string->string
+             (uc-string-split
+              (string->uc-string
+               "..wilma flintstone and fred flintstone")
+              (string->uc-string " flint")
+              'infix #f 2))))
+(check (equal?
+        '("wilma" "stone and")
+        (map uc-string->string
+             (uc-string-split
+              (string->uc-string
+               "..wilma flintstone and fred flintstone")
+              (string->uc-string " flint")
+              'infix #f 2 22))))
+(check (equal?
+        '("wilma" "stone and fred flintstone")
+        (map uc-string->string
+             (uc-string-split
+              (string->uc-string
+               "..wilma flintstone and fred flintstone")
+              (string->uc-string " flint")
+              'infix 1 2))))
+(check (equal?
+        '("pebbles" "stone and wilma" "stone and fred flintstone")
+        (map uc-string->string
+             (uc-string-split
+              (string->uc-string
+               "pebbles flintstone and wilma \
+                flintstone and fred flintstone")
+              (string->uc-string " flint")
+              'infix 2))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
