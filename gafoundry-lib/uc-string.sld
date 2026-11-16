@@ -662,18 +662,24 @@
 
 ;;;---------------------------------------------------------------------
 
-    (define (uc-string=? str1 str2)
-      (let* ((bv1 (bytevec str1))
-             (bv2 (bytevec str2))
-             (len1 (bytevector-length bv1))
-             (len2 (bytevector-length bv2)))
-        (and (= len1 len2)
-             (let loop ((i 0))
-               (cond ((= i len1) #t)
-                     ((= (bytevector-u32-ref bv1 i (endianness))
-                         (bytevector-u32-ref bv2 i (endianness)))
-                      (loop (+ i 4)))
-                     (else #f))))))
+    (define uc-string=?
+      (case-lambda
+        ((str1 str2) 
+         (let* ((bv1 (bytevec str1))
+                (bv2 (bytevec str2))
+                (len1 (bytevector-length bv1))
+                (len2 (bytevector-length bv2)))
+           (and (= len1 len2)
+                (let loop ((i 0))
+                  (cond ((= i len1) #t)
+                        ((= (bytevector-u32-ref bv1 i (endianness))
+                            (bytevector-u32-ref bv2 i (endianness)))
+                         (loop (+ i 4)))
+                        (else #f))))))
+        ((str . str*)
+         (let ((len (uc-string-length str)))
+           (and (every (lambda (s) (= len (uc-string-length s))) str*)
+                (every (lambda (s) (uc-string=? str s)) str*))))))
 
 ;;;---------------------------------------------------------------------
 

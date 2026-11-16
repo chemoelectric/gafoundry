@@ -1064,6 +1064,14 @@
                     (uc-string-remove
                      char-numeric?
                      (string->uc-string "fred flintstone"))))
+(check (uc-string=? (string->uc-string "abc")
+                    (string->uc-string "abc")
+                    (string->uc-string "abc")
+                    (string->uc-string "abc")))
+(check (not (uc-string=? (string->uc-string "abc")
+                         (string->uc-string "abc")
+                         (string->uc-string "abcd")
+                         (string->uc-string "abc"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
