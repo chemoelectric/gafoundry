@@ -69,6 +69,7 @@
 
           uc-string-map
           uc-string-for-each
+          uc-string-count
 
           uc-string-fold
           uc-string-fold-right
@@ -510,6 +511,21 @@
                ((= i len))
              (apply proc (map (lambda (s) (uc-string-ref s i))
                               str*)))))))
+
+    (define uc-string-count
+      (case-lambda
+        ((str pred start end)
+         (check-substring-bounds str start end)
+         (let ((count 0))
+           (do ((i start (+ i 1)))
+               ((= i end))
+             (when (pred (uc-string-ref str i))
+               (set! count (+ count 1))))
+           count))
+        ((str pred start)
+         (uc-string-count str pred start (uc-string-length str)))
+        ((str pred)
+         (uc-string-count str pred 0 (uc-string-length str)))))
 
     (define uc-string-unfold
       (let* ((nullstr (make-uc-string 0))

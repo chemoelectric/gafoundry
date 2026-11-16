@@ -1013,6 +1013,19 @@
                (string->uc-string " must be")
                (string->uc-string "Hello, I")))))
 (check (uc-string-null? (uc-string-concatenate-reverse '())))
+(check (zero? (uc-string-count (make-uc-string 0) (lambda (ch) #t))))
+(check (zero? (uc-string-count
+               (string->uc-string "fred flintstone") char-numeric?)))
+(check (= 1 (uc-string-count
+             (string->uc-string "fred flintstone") char-whitespace?)))
+(check (= 14 (uc-string-count
+              (string->uc-string "fred flintstone") char-lower-case?)))
+(check (= 10 (uc-string-count
+              (string->uc-string "fred flintstone")
+              char-lower-case? 4)))
+(check (= 5 (uc-string-count
+             (string->uc-string "fred flintstone")
+             char-lower-case? 10)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
