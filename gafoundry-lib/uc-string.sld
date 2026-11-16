@@ -366,10 +366,12 @@
     (define uc-string-fill!
       (let ((fill-it! (lambda (str fill start end)
                         (let ((bv (bytevec str))
-                              (ifill (char->integer fill)))
-                          (do ((i start (+ i 1)))
-                              ((= i end))
-                            (bytevector-u32-set! bv (* 4 i) ifill
+                              (ifill (char->integer fill))
+                              (istart (* 4 start))
+                              (iend (* 4 end)))
+                          (do ((i istart (+ i 4)))
+                              ((= i iend))
+                            (bytevector-u32-set! bv i ifill
                                                  (endianness)))))))
         (case-lambda
           ((str fill)
