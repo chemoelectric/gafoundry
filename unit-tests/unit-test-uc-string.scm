@@ -994,7 +994,25 @@
         (uc-string-replace
          (string->uc-string "It’s easy to code it up in Scheme.")
          (string->uc-string " and rewarding") 9 9)))
-
+(check (uc-string=?
+        (string->uc-string "Hello, I must be going.")
+        (uc-string-concatenate-reverse
+         (list (string->uc-string " must be")
+               (string->uc-string "Hello, I"))
+         (string->uc-string " going.XXXX") 7)))
+(check (uc-string=?
+        (string->uc-string "Hello, I must be going.XXXX")
+        (uc-string-concatenate-reverse
+         (list (string->uc-string " must be")
+               (string->uc-string "Hello, I"))
+         (string->uc-string " going.XXXX"))))
+(check (uc-string=?
+        (string->uc-string "Hello, I must be going.")
+        (uc-string-concatenate-reverse
+         (list (string->uc-string " going.")
+               (string->uc-string " must be")
+               (string->uc-string "Hello, I")))))
+(check (uc-string-null? (uc-string-concatenate-reverse '())))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

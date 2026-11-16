@@ -75,6 +75,7 @@
 
           uc-string-append
           uc-string-concatenate
+          uc-string-concatenate-reverse
           uc-string-join
 
           uc-string-take-while
@@ -151,16 +152,12 @@
       (truncate-quotient (bytevector-length bv) 4))
 
     (define (check-substring-bounds str start end)
-      (unless (and (<= 0 start)
-                   (<= start end)
-                   (<= end (uc-string-length str)))
+      (unless (<= 0 start end (uc-string-length str))
         (error "expected 0 <= start <= end <= (uc-string-length string)"
                start end (uc-string-length str))))
 
     (define (check-vector-bounds vec start end)
-      (unless (and (<= 0 start)
-                   (<= start end)
-                   (<= end (vector-length vec)))
+      (unless (<= 0 start end (vector-length vec))
         (error "expected 0 <= start <= end <= (vector-length vector)"
                start end (vector-length vec))))
 
@@ -425,6 +422,44 @@
           ((str fill start end)
            (check-substring-bounds str start end)
            (fill-it! str fill start end)))))
+
+    (define uc-string-concatenate-reverse
+      (let ((nullstr (make-uc-string 0)))
+        (case-lambda
+          ((str*)
+           (uc-string-concatenate-reverse str* nullstr 0))
+          ((str* final-str)
+           (uc-string-concatenate-reverse
+            str* final-str (uc-string-length final-str)))
+          ((str* final-str end)
+           (unless (<= 0 end (uc-string-length final-str))
+             (error "uc-string-concatenate-reverse: \
+                    end index out of bounds"
+                    end final-str))
+           (let ((total-len
+                  (let loop ((lst str*)
+                             (len end))
+                    (if (null-list? lst)
+                      len
+                      (let ((item (car lst)))
+                        (unless (uc-string? item)
+                          (error "uc-string-concatenate-reverse: \
+                                  element is not a uc-string"
+                                 item))
+                        (loop (cdr lst)
+                              (+ len (uc-string-length item))))))))
+             (let ((result (make-uc-string total-len))
+                   (start-pos (- total-len end)))
+               (uc-string-copy! result start-pos final-str 0 end)
+               (let loop ((lst str*)
+                          (pos start-pos))
+                 (if (null? lst)
+                   result
+                   (let* ((str (car lst))
+                          (len (uc-string-length str))
+                          (next-pos (- pos len)))
+                     (uc-string-copy! result next-pos str 0 len)
+                     (loop (cdr lst) next-pos))))))))))
 
 ;;;---------------------------------------------------------------------
 
