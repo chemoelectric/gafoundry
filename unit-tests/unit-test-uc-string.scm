@@ -930,6 +930,18 @@
                 flintstone and fred flintstone")
               (string->uc-string " flint")
               'infix 2))))
+(let ((str (string->uc-string "")))
+  (uc-string-fill! str #\.)
+  (check (uc-string=? (string->uc-string "") str)))
+(let ((str (string->uc-string "fred flintstone")))
+  (uc-string-fill! str #\.)
+  (check (uc-string=? (string->uc-string "...............") str)))
+(let ((str (string->uc-string "fred flintstone")))
+  (uc-string-fill! str #\. 5)
+  (check (uc-string=? (string->uc-string "fred ..........") str)))
+(let ((str (string->uc-string "fred flintstone")))
+  (uc-string-fill! str #\. 1 4)
+  (check (uc-string=? (string->uc-string "f... flintstone") str)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

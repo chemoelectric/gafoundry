@@ -56,6 +56,7 @@
           uc-substring
           uc-string-copy
           uc-string-copy!
+          uc-string-fill!
 
           uc-string=?
 
@@ -361,6 +362,26 @@
                            (bytevec from) (* start 4)))
         ((to at from)
          (bytevector-copy! (bytevec to) (* at 4) (bytevec from)))))
+
+    (define uc-string-fill!
+      (let ((fill-it! (lambda (str fill start end)
+                        (let ((bv (bytevec str))
+                              (ifill (char->integer fill)))
+                          (do ((i start (+ i 1)))
+                              ((= i end))
+                            (bytevector-u32-set! bv (* 4 i) ifill
+                                                 (endianness)))))))
+        (case-lambda
+          ((str fill)
+           (let ((end (uc-string-length str)))
+             (fill-it! str fill 0 end)))
+          ((str fill start)
+           (let ((end (uc-string-length str)))
+             (check-substring-bounds str start end)
+             (fill-it! str fill start end)))
+          ((str fill start end)
+           (check-substring-bounds str start end)
+           (fill-it! str fill start end)))))
 
 ;;;---------------------------------------------------------------------
 
