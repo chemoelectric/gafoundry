@@ -40,6 +40,8 @@
           uc-string->list
           reverse-list->uc-string
           uc-string->reverse-list
+          vector->uc-string
+          uc-string->vector
 
           string->uc-string
           uc-string->string
@@ -153,6 +155,13 @@
         (error "expected 0 <= start <= end <= (uc-string-length string)"
                start end (uc-string-length str))))
 
+    (define (check-vector-bounds vec start end)
+      (unless (and (<= 0 start)
+                   (<= start end)
+                   (<= end (vector-length vec)))
+        (error "expected 0 <= start <= end <= (vector-length vector)"
+               start end (vector-length vec))))
+
     (define (->uc-string obj)
       (cond ((uc-string? obj) obj)
             ((char? obj) (uc-string obj))
@@ -171,10 +180,11 @@
          (case-lambda
            ((len char)
             (let* ((ichar (char->integer char))
-                   (bv (make-bytevector (* len 4))))
-              (do ((i 0 (+ i 1)))
-                  ((= i len))
-                (bytevector-u32-set! bv (* i 4) ichar (endianness)))
+                   (len4 (* len 4))
+                   (bv (make-bytevector len4)))
+              (do ((i 0 (+ i 4)))
+                  ((= i len4))
+                (bytevector-u32-set! bv i ichar (endianness)))
               (construct bv)))
            ((len)
             (construct (make-bytevector (* len 4)))))))
@@ -183,7 +193,8 @@
        uc-string-tabulate
        (lambda (construct)
          (lambda (proc len)
-           (let ((bv (make-bytevector (* len 4))))
+           (let* ((len4 (* len 4))
+                  (bv (make-bytevector len4)))
              (do ((i 0 (+ i 1)))
                  ((= i len))
                (bytevector-u32-set! bv (* i 4)
@@ -196,11 +207,12 @@
        (lambda (construct)
          (lambda (lst)
            (let* ((len (length lst))
-                  (bv (make-bytevector (* len 4))))
+                  (len4 (* len 4))
+                  (bv (make-bytevector len4)))
              (do ((p lst (cdr p))
-                  (i 0 (+ i 1)))
+                  (i 0 (+ i 4)))
                  ((not-pair? p))
-               (bytevector-u32-set! bv (* i 4) (char->integer (car p))
+               (bytevector-u32-set! bv i (char->integer (car p))
                                     (endianness)))
              (construct bv)))))
 
@@ -209,13 +221,40 @@
        (lambda (construct)
          (lambda (lst)
            (let* ((len (length lst))
-                  (bv (make-bytevector (* len 4))))
+                  (len4 (* len 4))
+                  (bv (make-bytevector len4)))
              (do ((p lst (cdr p))
-                  (i (- len 1) (- i 1)))
+                  (i (- len4 4) (- i 4)))
                  ((not-pair? p))
-               (bytevector-u32-set! bv (* i 4) (char->integer (car p))
+               (bytevector-u32-set! bv i (char->integer (car p))
                                     (endianness)))
              (construct bv)))))
+
+      (constructor>
+       vector->uc-string
+       (lambda (construct)
+         (define (vec->str vec start end)
+           (let* ((len (- end start))
+                  (len4 (* len 4))
+                  (bv (make-bytevector len4)))
+             (do ((i 0 (+ i 1)))
+                 ((= i len))
+               (bytevector-u32-set! bv (* i 4)
+                                    (char->integer
+                                     (vector-ref vec (+ start i)))
+                                    (endianness)))
+             (construct bv)))
+         (case-lambda
+           ((vec)
+            (let ((end (vector-length vec)))
+              (vec->str vec 0 end)))
+           ((vec start)
+            (let ((end (vector-length vec)))
+              (check-vector-bounds vec start end)
+              (vec->str vec start end)))
+           ((vec start end)
+            (check-vector-bounds vec start end)
+            (vec->str vec start end)))))
 
       (constructor>
        string->uc-string
@@ -597,14 +636,26 @@
 
 ;;;---------------------------------------------------------------------
 
-    (define (uc-string->list str)
-      (let* ((n (uc-string-length str))
-             (lst (list '())))
-        (do ((i 0 (+ i 1))
-             (p lst (cdr p)))
-            ((= i n))
-          (set-cdr! p (list (uc-string-ref str i))))
-        (cdr lst)))
+    (define uc-string->list
+      (let ((str->list
+             (lambda (str start end)
+               (let ((lst (list '())))
+                 (do ((i start (+ i 1))
+                      (p lst (cdr p)))
+                     ((= i end))
+                   (set-cdr! p (list (uc-string-ref str i))))
+                 (cdr lst)))))
+        (case-lambda
+          ((str)
+           (let ((end (uc-string-length str)))
+             (str->list str 0 end)))
+          ((str start)
+           (let ((end (uc-string-length str)))
+             (check-substring-bounds str start end)
+             (str->list str start end)))
+          ((str start end)
+           (check-substring-bounds str start end)
+           (str->list str start end)))))
 
     (define (uc-string->reverse-list str)
       (let* ((n (uc-string-length str))
@@ -613,6 +664,27 @@
             ((= i n))
           (set! lst (cons (uc-string-ref str i) lst)))
         lst))
+
+    (define uc-string->vector
+      (let ((str->vec
+             (lambda (str start end)
+               (let ((vec (make-vector (- end start))))
+                 (do ((i start (+ i 1)))
+                     ((= i end))
+                   (vector-set! vec (- i start)
+                                (uc-string-ref str i)))
+                 vec))))
+        (case-lambda
+          ((str)
+           (let ((end (uc-string-length str)))
+             (str->vec str 0 end)))
+          ((str start)
+           (let ((end (uc-string-length str)))
+             (check-substring-bounds str start end)
+             (str->vec str start end)))
+          ((str start end)
+           (check-substring-bounds str start end)
+           (str->vec str start end)))))
 
     (define (uc-string->string str)
       (utf32->string (bytevec str) (endianness)))
