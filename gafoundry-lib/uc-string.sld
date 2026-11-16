@@ -69,6 +69,8 @@
 
           uc-string-map
           uc-string-for-each
+          uc-string-filter
+          uc-string-remove
           uc-string-count
 
           uc-string-fold
@@ -167,6 +169,13 @@
             ((char? obj) (uc-string obj))
             ((string? obj) (string->uc-string obj))
             (else (error "expected uc-string, string, or char" obj))))
+
+    (define (complement pred)
+      (case-lambda
+        ((arg)
+         (not (pred arg)))
+        (arg*
+         (not (apply pred arg*)))))
 
 ;;;---------------------------------------------------------------------
 
@@ -511,6 +520,45 @@
                ((= i len))
              (apply proc (map (lambda (s) (uc-string-ref s i))
                               str*)))))))
+
+    (define uc-string-filter
+      (case-lambda
+        ((pred str)
+         (uc-string-filter pred str 0 (uc-string-length str)))
+        ((pred str start)
+         (uc-string-filter pred str start (uc-string-length str)))
+        ((pred str start end)
+         (check-substring-bounds str start end)
+         (let ((vec (uc-string->vector str start end))
+               (substr-len (- end start))
+               (count 0))
+           (do ((i 0 (+ i 1)))
+               ((= i substr-len))
+             (if (pred (vector-ref vec i))
+               (set! count (+ count 1))
+               (vector-set! vec i #f)))
+           (let ((result (make-uc-string count)))
+             (let loop ((i 0)
+                        (j 0))
+               (if (= i substr-len)
+                 result
+                 (let ((ch (vector-ref vec i)))
+                   (if ch
+                     (begin
+                       (uc-string-set! result j ch)
+                       (loop (+ i 1) (+ j 1)))
+                     (loop (+ i 1) j))))))))))
+
+    (define uc-string-remove
+      (case-lambda
+        ((pred str)
+         (uc-string-filter (complement pred)
+                           str 0 (uc-string-length str)))
+        ((pred str start)
+         (uc-string-filter (complement pred)
+                           str start (uc-string-length str)))
+        ((pred str start end)
+         (uc-string-filter (complement pred) str start end))))
 
     (define uc-string-count
       (case-lambda

@@ -1026,6 +1026,44 @@
 (check (= 5 (uc-string-count
              (string->uc-string "fred flintstone")
              char-lower-case? 10)))
+(check (uc-string=? (string->uc-string "red linsone")
+                    (uc-string-filter
+                     (lambda (ch) (and (not (char=? ch #\f))
+                                       (not (char=? ch #\t))))
+                     (string->uc-string "fred flintstone"))))
+(check (uc-string=? (string->uc-string "flisoe")
+                    (uc-string-filter
+                     (lambda (ch) (and (not (char=? ch #\n))
+                                       (not (char=? ch #\t))))
+                     (string->uc-string "fred flintstone") 5)))
+(check (uc-string=? (string->uc-string "fli")
+                    (uc-string-filter
+                     (lambda (ch) (and (not (char=? ch #\n))
+                                       (not (char=? ch #\t))))
+                     (string->uc-string "fred flintstone") 5 10)))
+(check (uc-string=? (string->uc-string "")
+                    (uc-string-filter
+                     char-numeric?
+                     (string->uc-string "fred flintstone"))))
+(check (uc-string=? (string->uc-string "fftt")
+                    (uc-string-remove
+                     (lambda (ch) (and (not (char=? ch #\f))
+                                       (not (char=? ch #\t))))
+                     (string->uc-string "fred flintstone"))))
+(check (uc-string=? (string->uc-string "ftt")
+                    (uc-string-remove
+                     (lambda (ch) (and (not (char=? ch #\f))
+                                       (not (char=? ch #\t))))
+                     (string->uc-string "fred flintstone") 5)))
+(check (uc-string=? (string->uc-string "ft")
+                    (uc-string-remove
+                     (lambda (ch) (and (not (char=? ch #\f))
+                                       (not (char=? ch #\t))))
+                     (string->uc-string "fred flintstone") 5 10)))
+(check (uc-string=? (string->uc-string "fred flintstone")
+                    (uc-string-remove
+                     char-numeric?
+                     (string->uc-string "fred flintstone"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
