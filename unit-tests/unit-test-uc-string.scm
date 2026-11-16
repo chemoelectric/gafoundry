@@ -970,6 +970,31 @@
 (check (uc-string=? (string->uc-string "fre")
                     (vector->uc-string '#(#\. #\. #\f #\r #\e #\d)
                                        2 5)))
+(check (uc-string=?
+        (string->uc-string
+         "The miserable perl programmer endured daily ridicule.")
+        (uc-string-replace
+         (string->uc-string
+          "The TCL programmer endured daily ridicule.")
+         (string->uc-string
+          "another miserable perl drone") 4 7 8 22)))
+(check (uc-string=?
+        (string->uc-string "It’s lots of fun to code it up in Scheme.")
+        (uc-string-replace
+         (string->uc-string "It’s easy to code it up in Scheme.")
+         (string->uc-string "lots of fun") 5 9)))
+(check (uc-string=?
+        (string->uc-string "It’s fun to code it up in Scheme.")
+        (uc-string-replace
+         (string->uc-string "It’s easy to code it up in Scheme.")
+         (string->uc-string "lots of fun") 5 9 8)))
+(check (uc-string=?
+        (string->uc-string
+         "It’s easy and rewarding to code it up in Scheme.")
+        (uc-string-replace
+         (string->uc-string "It’s easy to code it up in Scheme.")
+         (string->uc-string " and rewarding") 9 9)))
+
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

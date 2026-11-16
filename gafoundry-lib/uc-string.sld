@@ -98,6 +98,8 @@
           uc-string-segment
           uc-string-split
           uc-string-replicate
+
+          uc-string-replace
           )
 
   (import (scheme base)
@@ -1318,6 +1320,24 @@
                      (drop-right raw-parts 1)
                      raw-parts))
                   (else raw-parts)))))))))
+
+;;;---------------------------------------------------------------------
+
+    (define uc-string-replace
+      (case-lambda
+        ((str1 str2 start1 end1)
+         (uc-string-replace str1 str2 start1 end1
+                            0 (uc-string-length str2)))
+        ((str1 str2 start1 end1 start2)
+         (uc-string-replace str1 str2 start1 end1
+                            start2 (uc-string-length str2)))
+        ((str1 str2 start1 end1 start2 end2)
+         (check-substring-bounds str1 start1 end1)
+         (check-substring-bounds str2 start2 end2)
+         (let ((replacement (uc-string-copy str2 start2 end2))
+               (prefix (uc-string-copy str1 0 start1))
+               (suffix (uc-string-copy str1 end1)))
+           (uc-string-append prefix replacement suffix)))))
 
 ;;;---------------------------------------------------------------------
 
