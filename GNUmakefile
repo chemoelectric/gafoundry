@@ -53,7 +53,6 @@ LIBRARY_SRC = \
 		gafoundry-lib/xml-parse.sld \
 		gafoundry-lib/format.sld \
 		gafoundry-lib/match.sld \
-		gafoundry-lib/prec.sld \
 		gafoundry-lib/uc-string.sld \
 		gafoundry-lib/define-record-factory.sld
 
@@ -80,12 +79,12 @@ gafoundry-lib/xml-parse.sld: gafoundry-lib/xml-parse.scm
 all:: gafoundry-lib/xml-parse.sld
 maintainer-clean:: ; -rm -f gafoundry-lib/xml-parse.sld
 
-gafoundry-lib/prec.sld: gafoundry-lib/replacements-for-slib.scm
-gafoundry-lib/prec.sld: gafoundry-lib/alist.scm
-gafoundry-lib/prec.sld: gafoundry-lib/strsrch.scm
-gafoundry-lib/prec.sld: gafoundry-lib/prec.scm
-all:: gafoundry-lib/prec.sld
-maintainer-clean:: ; -rm -f gafoundry-lib/prec.sld
+#gafoundry-lib/prec.sld: gafoundry-lib/replacements-for-slib.scm
+#gafoundry-lib/prec.sld: gafoundry-lib/alist.scm
+#gafoundry-lib/prec.sld: gafoundry-lib/strsrch.scm
+#gafoundry-lib/prec.sld: gafoundry-lib/prec.scm
+#all:: gafoundry-lib/prec.sld
+#maintainer-clean:: ; -rm -f gafoundry-lib/prec.sld
 
 gafoundry-lib/match.sld: gafoundry-lib/match.scm
 all:: gafoundry-lib/match.sld

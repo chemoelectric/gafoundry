@@ -29,8 +29,6 @@
              (source "gafoundry-lib/version.sld")
              (component-dependencies
               gafoundry-lib.format))
-  (extension gafoundry-lib.prec
-             (source "gafoundry-lib/prec.sld"))
   (extension gafoundry-lib.xml-parse
              (source "gafoundry-lib/xml-parse.sld"))
   (extension gafoundry-lib.format
