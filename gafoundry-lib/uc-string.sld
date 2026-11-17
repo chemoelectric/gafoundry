@@ -61,6 +61,15 @@
           uc-string-fill!
 
           uc-string=?
+          uc-string<?
+          uc-string<=?
+          uc-string>?
+          uc-string>=?
+          uc-string-ci=?
+          uc-string-ci<?
+          uc-string-ci<=?
+          uc-string-ci>?
+          uc-string-ci>=?
 
           uc-string-index
           uc-string-index-right
@@ -676,10 +685,33 @@
                             (bytevector-u32-ref bv2 i (endianness)))
                          (loop (+ i 4)))
                         (else #f))))))
-        ((str . str*)
-         (let ((len (uc-string-length str)))
+        ((str1 str2 . str*)
+         (let ((len (uc-string-length str1))
+               (str* (cons str2 str*)))
            (and (every (lambda (s) (= len (uc-string-length s))) str*)
-                (every (lambda (s) (uc-string=? str s)) str*))))))
+                (every (lambda (s) (uc-string=? str1 s)) str*))))))
+
+    (define-syntax uc-str-cmp?
+      (syntax-rules ()
+        ((uc-str-cmp? str-cmp?)
+         (case-lambda
+           ((str1 str2)
+            (str-cmp? (uc-string->string str1)
+                      (uc-string->string str2)))
+           ((str1 str2 . str*)
+            (apply str-cmp? `(,(uc-string->string str1)
+                              ,(uc-string->string str2)
+                              . ,(map uc-string->string str*))))))))
+
+    (define uc-string<? (uc-str-cmp? string<?))
+    (define uc-string<=? (uc-str-cmp? string<=?))
+    (define uc-string>? (uc-str-cmp? string>?))
+    (define uc-string>=? (uc-str-cmp? string>=?))
+    (define uc-string-ci=? (uc-str-cmp? string-ci=?))
+    (define uc-string-ci<? (uc-str-cmp? string-ci<?))
+    (define uc-string-ci<=? (uc-str-cmp? string-ci<=?))
+    (define uc-string-ci>? (uc-str-cmp? string-ci>?))
+    (define uc-string-ci>=? (uc-str-cmp? string-ci>=?))
 
 ;;;---------------------------------------------------------------------
 
