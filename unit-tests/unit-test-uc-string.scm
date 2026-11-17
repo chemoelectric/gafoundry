@@ -1112,6 +1112,12 @@
                          (string->uc-string "abc"))))
 (check (uc-string>? (string->uc-string "abcd")
                     (string->uc-string "abc")))
+(check (uc-string=? (string->uc-string "abcd")
+                    (uc-string-downcase (string->uc-string "ABCD"))))
+(check (uc-string=? (string->uc-string "ABCD")
+                    (uc-string-upcase (string->uc-string "abcd"))))
+(check (uc-string=? (string->uc-string "abss")
+                    (uc-string-foldcase (string->uc-string "ABß"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

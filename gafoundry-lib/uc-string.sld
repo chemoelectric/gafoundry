@@ -71,6 +71,10 @@
           uc-string-ci>?
           uc-string-ci>=?
 
+          uc-string-upcase
+          uc-string-downcase
+          uc-string-foldcase
+
           uc-string-index
           uc-string-index-right
           uc-string-skip
@@ -712,6 +716,15 @@
     (define uc-string-ci<=? (uc-str-cmp? string-ci<=?))
     (define uc-string-ci>? (uc-str-cmp? string-ci>?))
     (define uc-string-ci>=? (uc-str-cmp? string-ci>=?))
+
+    (define (uc-string-upcase str)
+      (string->uc-string (string-upcase (uc-string->string str))))
+
+    (define (uc-string-downcase str)
+      (string->uc-string (string-downcase (uc-string->string str))))
+
+    (define (uc-string-foldcase str)
+      (string->uc-string (string-foldcase (uc-string->string str))))
 
 ;;;---------------------------------------------------------------------
 
