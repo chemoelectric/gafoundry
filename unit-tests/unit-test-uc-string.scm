@@ -1118,6 +1118,74 @@
                     (uc-string-upcase (string->uc-string "abcd"))))
 (check (uc-string=? (string->uc-string "abss")
                     (uc-string-foldcase (string->uc-string "ABß"))))
+(check (zero? (uc-string-prefix-length
+               (string->uc-string "fred flintstone")
+               (string->uc-string "wilma flintstone"))))
+(check (= 5 (uc-string-prefix-length
+             (string->uc-string "fred flintstone")
+             (string->uc-string "fred FLINTSTONE"))))
+(check (= 5 (uc-string-prefix-length
+             (string->uc-string "xxfred flintstone")
+             (string->uc-string "fred FLINTSTONE")
+             2)))
+(check (= 3 (uc-string-prefix-length
+             (string->uc-string "xxfred flintstone")
+             (string->uc-string "fred FLINTSTONE")
+             2 5)))
+(check (= 2 (uc-string-prefix-length
+             (string->uc-string "xxfred flintstone")
+             (string->uc-string "xxxxfred FLINTSTONE")
+             2 5 4 6)))
+(check (zero? (uc-string-prefix-length
+               (string->uc-string "wilma flintstone")
+               (string->uc-string "fred flintstone"))))
+(check (= 5 (uc-string-prefix-length
+             (string->uc-string "fred FLINTSTONE")
+             (string->uc-string "fred flintstone"))))
+(check (= 5 (uc-string-prefix-length
+             (string->uc-string "fred FLINTSTONE")
+             (string->uc-string "xxfred flintstone")
+             0 15 2)))
+(check (= 3 (uc-string-prefix-length
+             (string->uc-string "fred FLINTSTONE")
+             (string->uc-string "xxfred flintstone")
+             0 15 2 5)))
+(check (= 2 (uc-string-prefix-length
+             (string->uc-string "xxxxfred FLINTSTONE")
+             (string->uc-string "xxfred flintstone")
+             4 6 2 5)))
+(let ((str (string->uc-string "fred FLINTSTONE")))
+  (check (= 15 (uc-string-prefix-length str str))))
+(let ((str (string->uc-string "fred FLINTSTONE")))
+  (check (= 10 (uc-string-prefix-length str str 5 15 5))))
+(let ((str (string->uc-string "fred FLINTSTONE")))
+  (check (= 10 (uc-string-prefix-length str str 5 15 5 15))))
+(let ((str (string->uc-string "fred FLINTSTONE")))
+  (check (zero? (uc-string-prefix-length str str 4 15 5 15))))
+(let ((str (string->uc-string "fred flintstone")))
+  (check (= 1 (uc-string-prefix-length str str 0 1 5 1))))
+(check (= 11 (uc-string-suffix-length
+              (string->uc-string "fred flintstone")
+              (string->uc-string "wilma flintstone"))))
+(check (zero? (uc-string-suffix-length
+               (string->uc-string "fred flintstone")
+               (string->uc-string "wilma FLINTSTONE"))))
+(check (= 11 (uc-string-suffix-length
+              (string->uc-string "fred flintstone")
+              (string->uc-string "xxwilma flintstone")
+              0 15 2)))
+(check (= 11 (uc-string-suffix-length
+              (string->uc-string "xxfred flintstone")
+              (string->uc-string "wilma flintstone")
+              2)))
+(check (= 1 (uc-string-suffix-length
+             (string->uc-string "xxfred flintstone")
+             (string->uc-string "wilma flintstone")
+             2 5)))
+(check (= 10 (uc-string-suffix-length
+              (string->uc-string "fred flintstone")
+              (string->uc-string "xxwilma flintstone")
+              0 14 2 17)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

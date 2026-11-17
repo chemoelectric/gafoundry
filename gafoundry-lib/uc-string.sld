@@ -117,6 +117,9 @@
           uc-string-replicate
 
           uc-string-replace
+
+          uc-string-prefix-length
+          uc-string-suffix-length
           )
 
   (import (scheme base)
@@ -1488,6 +1491,76 @@
                (prefix (uc-string-copy str1 0 start1))
                (suffix (uc-string-copy str1 end1)))
            (uc-string-append prefix replacement suffix)))))
+
+;;;---------------------------------------------------------------------
+
+    (define uc-string-prefix-length
+      (case-lambda
+        ((str1 str2 start1 end1 start2 end2)
+         (let* ((len1 (- end1 start1))
+                (len2 (- end2 start2))
+                (len (min len1 len2)))
+           (if (and (eq? str1 str2)
+                    (= start1 start2))
+             len
+             (let ((count 0))
+               (do ((i start1 (+ i 1))
+                    (j start2 (+ j 1)))
+                   ((or (= count len)
+                        (not (char=? (uc-string-ref str1 i)
+                                     (uc-string-ref str2 j)))))
+                 (set! count (+ count 1)))
+               count))))
+        ((str1 str2 start1 end1 start2)
+         (uc-string-prefix-length str1 str2
+                                  start1 end1
+                                  start2 (uc-string-length str2)))
+        ((str1 str2 start1 end1)
+         (uc-string-prefix-length str1 str2
+                                  start1 end1
+                                  0 (uc-string-length str2)))
+        ((str1 str2 start1)
+         (uc-string-prefix-length str1 str2
+                                  start1 (uc-string-length str1)
+                                  0 (uc-string-length str2)))
+        ((str1 str2)
+         (uc-string-prefix-length str1 str2
+                                  0 (uc-string-length str1)
+                                  0 (uc-string-length str2)))))
+
+    (define uc-string-suffix-length
+      (case-lambda
+        ((str1 str2 start1 end1 start2 end2)
+         (let* ((len1 (- end1 start1))
+                (len2 (- end2 start2))
+                (len (min len1 len2)))
+           (if (and (eq? str1 str2)
+                    (= end1 end2))
+             len
+             (let ((count 0))
+               (do ((i (- end1 1) (- i 1))
+                    (j (- end2 1) (- j 1)))
+                   ((or (= count len)
+                        (not (char=? (uc-string-ref str1 i)
+                                     (uc-string-ref str2 j)))))
+                 (set! count (+ count 1)))
+               count))))
+        ((str1 str2 start1 end1 start2)
+         (uc-string-suffix-length str1 str2
+                                  start1 end1
+                                  start2 (uc-string-length str2)))
+        ((str1 str2 start1 end1)
+         (uc-string-suffix-length str1 str2
+                                  start1 end1
+                                  0 (uc-string-length str2)))
+        ((str1 str2 start1)
+         (uc-string-suffix-length str1 str2
+                                  start1 (uc-string-length str1)
+                                  0 (uc-string-length str2)))
+        ((str1 str2)
+         (uc-string-suffix-length str1 str2
+                                  0 (uc-string-length str1)
+                                  0 (uc-string-length str2)))))
 
 ;;;---------------------------------------------------------------------
 
