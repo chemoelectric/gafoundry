@@ -122,6 +122,9 @@
           uc-string-suffix-length
           uc-string-prefix?
           uc-string-suffix?
+
+          read-uc-string
+          write-uc-string
           )
 
   (import (scheme base)
@@ -843,14 +846,27 @@
            (check-substring-bounds str start end)
            (str->vec str start end)))))
 
-    (define (uc-string->string str)
-      (utf32->string (bytevec str) (endianness)))
+    (define uc-string->string
+      (case-lambda
+        ((str)
+         (utf32->string (bytevec str) (endianness)))
+        ((str start end)
+         (check-substring-bounds str start end)
+         (uc-string->string (uc-string-copy str start end)))
+        ((str start)
+         (uc-string->string str start (uc-string-length str)))))
 
     (define (symbol->uc-string symbol)
       (string->uc-string (symbol->string symbol)))
 
-    (define (uc-string->symbol str)
-      (string->symbol (uc-string->string str)))
+    (define uc-string->symbol
+      (case-lambda
+        ((str)
+         (string->symbol (uc-string->string str)))
+        ((str start end)
+         (string->symbol (uc-string->string str start end)))
+        ((str start)
+         (string->symbol (uc-string->string str start)))))
 
     (define number->uc-string
       (case-lambda
@@ -864,7 +880,11 @@
         ((str)
          (string->number (uc-string->string str)))
         ((str radix)
-         (string->number (uc-string->string str) radix))))
+         (string->number (uc-string->string str) radix))
+        ((str radix start end)
+         (uc-string->number (uc-string-copy str start end) radix))
+        ((str radix start)
+         (uc-string->number (uc-string-copy str start) radix))))
 
 ;;;---------------------------------------------------------------------
 
@@ -1499,6 +1519,8 @@
     (define uc-string-prefix-length
       (case-lambda
         ((str1 str2 start1 end1 start2 end2)
+         (check-substring-bounds str1 start1 end1)
+         (check-substring-bounds str2 start2 end2)
          (let* ((len1 (- end1 start1))
                 (len2 (- end2 start2))
                 (len (min len1 len2)))
@@ -1533,6 +1555,8 @@
     (define uc-string-suffix-length
       (case-lambda
         ((str1 str2 start1 end1 start2 end2)
+         (check-substring-bounds str1 start1 end1)
+         (check-substring-bounds str2 start2 end2)
          (let* ((len1 (- end1 start1))
                 (len2 (- end2 start2))
                 (len (min len1 len2)))
@@ -1613,6 +1637,31 @@
          (uc-string-suffix? str1 str2
                             0 (uc-string-length str1)
                             0 (uc-string-length str2)))))
+
+;;;---------------------------------------------------------------------
+
+    (define read-uc-string
+      (case-lambda
+        ((k port)
+         (let ((retval (read-string k port)))
+           (if (eof-object? retval)
+             retval
+             (string->uc-string retval))))
+        ((k)
+         (read-uc-string k (current-input-port)))))
+
+    (define write-uc-string
+      (case-lambda
+        ((str port start end)
+         (check-substring-bounds str start end)
+         (write-string (uc-string->string str start end) port))
+        ((str port start)
+         (write-uc-string str port start (uc-string-length str)))
+        ((str port)
+         (write-uc-string str port 0 (uc-string-length str)))
+        ((str)
+         (write-uc-string str (current-output-port)
+                          0 (uc-string-length str)))))
 
 ;;;---------------------------------------------------------------------
 

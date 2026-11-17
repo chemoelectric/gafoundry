@@ -22,8 +22,9 @@
 ;; SOFTWARE.
 
 (import (scheme base)
-        (scheme char)
         (scheme case-lambda)
+        (scheme char)
+        (scheme file)
         (scheme process-context)
         (gafoundry-lib format)
         (gafoundry-lib uc-string))
@@ -1163,7 +1164,7 @@
 (let ((str (string->uc-string "fred FLINTSTONE")))
   (check (zero? (uc-string-prefix-length str str 4 15 5 15))))
 (let ((str (string->uc-string "fred flintstone")))
-  (check (= 1 (uc-string-prefix-length str str 0 1 5 1))))
+  (check (= 1 (uc-string-prefix-length str str 0 1 5 6))))
 (check (= 11 (uc-string-suffix-length
               (string->uc-string "fred flintstone")
               (string->uc-string "wilma flintstone"))))
@@ -1251,6 +1252,20 @@
         (string->uc-string "xxxflintstonexxx")
         (string->uc-string ".....fred flintstone.....")
         3 13 5 20))
+(let ((test-file "unit-test-uc-string.test-file"))
+  (when (file-exists? test-file)
+    (delete-file test-file))
+  (with-output-to-file test-file
+    (lambda ()
+      (write-uc-string (string->uc-string "fred flintstone\n"))))
+  (with-input-from-file test-file
+    (lambda ()
+      (let ((str (read-uc-string 16)))
+        (check (eof-object? (read-uc-string 1)))
+        (check (uc-string=? str (string->uc-string
+                                 "fred flintstone\n"))))))
+  (when (file-exists? test-file)
+    (delete-file test-file)))  
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
