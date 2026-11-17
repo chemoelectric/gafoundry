@@ -120,6 +120,8 @@
 
           uc-string-prefix-length
           uc-string-suffix-length
+          uc-string-prefix?
+          uc-string-suffix?
           )
 
   (import (scheme base)
@@ -1561,6 +1563,56 @@
          (uc-string-suffix-length str1 str2
                                   0 (uc-string-length str1)
                                   0 (uc-string-length str2)))))
+
+    (define uc-string-prefix?
+      (case-lambda
+        ((str1 str2 start1 end1 start2 end2)
+         (let ((len1 (- end1 start1))
+               (len2 (- end2 start2)))
+           (and (<= len1 len2)
+                (= len1 (uc-string-prefix-length
+                         str1 str2 start1 end1 start2 end2)))))
+        ((str1 str2 start1 end1 start2)
+         (uc-string-prefix? str1 str2
+                            start1 end1
+                            start2 (uc-string-length str2)))
+        ((str1 str2 start1 end1)
+         (uc-string-prefix? str1 str2
+                            start1 end1
+                            0 (uc-string-length str2)))
+        ((str1 str2 start1)
+         (uc-string-prefix? str1 str2
+                            start1 (uc-string-length str1)
+                            0 (uc-string-length str2)))
+        ((str1 str2)
+         (uc-string-prefix? str1 str2
+                            0 (uc-string-length str1)
+                            0 (uc-string-length str2)))))
+
+    (define uc-string-suffix?
+      (case-lambda
+        ((str1 str2 start1 end1 start2 end2)
+         (let ((len1 (- end1 start1))
+               (len2 (- end2 start2)))
+           (and (<= len1 len2)
+                (= len1 (uc-string-suffix-length
+                         str1 str2 start1 end1 start2 end2)))))
+        ((str1 str2 start1 end1 start2)
+         (uc-string-suffix? str1 str2
+                            start1 end1
+                            start2 (uc-string-length str2)))
+        ((str1 str2 start1 end1)
+         (uc-string-suffix? str1 str2
+                            start1 end1
+                            0 (uc-string-length str2)))
+        ((str1 str2 start1)
+         (uc-string-suffix? str1 str2
+                            start1 (uc-string-length str1)
+                            0 (uc-string-length str2)))
+        ((str1 str2)
+         (uc-string-suffix? str1 str2
+                            0 (uc-string-length str1)
+                            0 (uc-string-length str2)))))
 
 ;;;---------------------------------------------------------------------
 

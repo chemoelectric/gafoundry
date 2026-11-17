@@ -1186,6 +1186,71 @@
               (string->uc-string "fred flintstone")
               (string->uc-string "xxwilma flintstone")
               0 14 2 17)))
+(check (uc-string-prefix?
+        (string->uc-string "fred")
+        (string->uc-string "fred flintstone")))
+(check (not (uc-string-prefix?
+             (string->uc-string "fred flintstone")
+             (string->uc-string "fred"))))
+(check (uc-string-prefix?
+        (string->uc-string "")
+        (string->uc-string "fred flintstone")))
+(check (not (uc-string-prefix?
+             (string->uc-string "wilma")
+             (string->uc-string "fred flintstone"))))
+(check (uc-string-prefix?
+        (string->uc-string "xxfred")
+        (string->uc-string "fred flintstone")
+        2))
+(check (uc-string-prefix?
+        (string->uc-string "xxfredxx")
+        (string->uc-string "fred flintstone")
+        2 6))
+(check (uc-string-prefix?
+        (string->uc-string "xxfredxx")
+        (string->uc-string "xxxfred flintstone")
+        2 6 3))
+(check (not (uc-string-prefix?
+             (string->uc-string "xxfredxx")
+             (string->uc-string "xxxfrexxxd flintstone")
+             2 6 3)))
+(check (uc-string-prefix?
+        (string->uc-string "xxfredxx")
+        (string->uc-string "xxxfrexxxd flintstone")
+        2 5 3))
+(check (not (uc-string-prefix?
+             (string->uc-string "xxfredxx")
+             (string->uc-string "xxxfrexxxd flintstone")
+             2 5 3 5)))
+(check (uc-string-prefix?
+        (string->uc-string "xxfredxx")
+        (string->uc-string "xxxfrexxxd flintstone")
+        2 4 3 5))
+(check (uc-string-suffix?
+        (string->uc-string "flintstone")
+        (string->uc-string "fred flintstone")))
+(check (not (uc-string-suffix?
+             (string->uc-string "rubble")
+             (string->uc-string "fred flintstone"))))
+(check (uc-string-suffix?
+        (string->uc-string "")
+        (string->uc-string "fred flintstone")))
+(check (uc-string-suffix?
+        (string->uc-string "xxxflintstone")
+        (string->uc-string "fred flintstone")
+        3))
+(check (uc-string-suffix?
+        (string->uc-string "xxxflintstonexxx")
+        (string->uc-string "fred flintstone")
+        3 13))
+(check (uc-string-suffix?
+        (string->uc-string "xxxflintstonexxx")
+        (string->uc-string ".....fred flintstone")
+        3 13 5))
+(check (uc-string-suffix?
+        (string->uc-string "xxxflintstonexxx")
+        (string->uc-string ".....fred flintstone.....")
+        3 13 5 20))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
