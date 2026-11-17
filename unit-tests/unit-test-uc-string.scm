@@ -1278,6 +1278,22 @@
 (check (eq? (uc-string->symbol (string->uc-string "flint"))
             (uc-string->symbol (string->uc-string "fred flintstone")
                                5 10)))
+(check (uc-string=?
+        (string->uc-string "E=mc² é é")
+        (uc-string-normalize-nfc
+         (string->uc-string "E=mc² é e\x301;"))))
+(check (uc-string=?
+        (string->uc-string "E=mc2 é é")
+        (uc-string-normalize-nfkc
+         (string->uc-string "E=mc² é e\x301;"))))
+(check (uc-string=?
+        (string->uc-string "E=mc² e\x301; e\x301;")
+        (uc-string-normalize-nfd
+         (string->uc-string "E=mc² é e\x301;"))))
+(check (uc-string=?
+        (string->uc-string "E=mc2 e\x301; e\x301;")
+        (uc-string-normalize-nfkd
+         (string->uc-string "E=mc² é e\x301;"))))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"

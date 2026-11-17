@@ -91,6 +91,11 @@ gafoundry-lib/match.sld: gafoundry-lib/match.scm
 all:: gafoundry-lib/match.sld
 maintainer-clean:: ; -rm -f gafoundry-lib/match.sld
 
+gafoundry-lib/uc-string.sld: gafoundry-lib/unicode0.body.scm
+gafoundry-lib/uc-string.sld: gafoundry-lib/unicode4.body.scm
+all:: gafoundry-lib/uc-string.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/uc-string.sld
+
 .PHONY: install
 install:: g25spec2gaspec
 	$(CHICKEN_INSTALL) -s
@@ -104,7 +109,8 @@ test install-check::
 	$(CHICKEN_INSTALL) -s -test
 
 .PHONY: unit-test
-unit-test:: unit-tests/unit-test-uc-string.scm
+unit-test:: unit-tests/unit-test-uc-string.scm \
+			gafoundry-lib/uc-string.sld
 	unit-tests/unit-test-uc-string.scm $(UNIT_TEST_PRETTY)
 
 clean::

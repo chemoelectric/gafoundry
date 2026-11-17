@@ -5,8 +5,10 @@
  (category math)
  (dependencies (chicken "6.0.0")
                srfi-1
-               srfi-37)
- (test-dependencies scsh-process test)
+               srfi-37
+               srfi-141)
+ (test-dependencies scsh-process
+                    test)
  (component-options
   (csc-options -O2 -d1 -w))
  (components
