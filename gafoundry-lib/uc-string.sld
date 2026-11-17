@@ -289,8 +289,15 @@
       (constructor>
        string->uc-string
        (lambda (construct)
-         (lambda (str)
-           (construct (string->utf32 str (endianness))))))
+         (case-lambda
+           ((str)
+            (construct (string->utf32 str (endianness))))
+           ((str start end)
+            (construct (string->utf32 (string-copy str start end)
+                                      (endianness))))
+           ((str start)
+            (construct (string->utf32 (string-copy str start)
+                                      (endianness)))))))
 
       (constructor>
        uc-string-copy

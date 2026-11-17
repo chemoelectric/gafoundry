@@ -1265,7 +1265,19 @@
         (check (uc-string=? str (string->uc-string
                                  "fred flintstone\n"))))))
   (when (file-exists? test-file)
-    (delete-file test-file)))  
+    (delete-file test-file)))
+(check (uc-string=? (string->uc-string "flint")
+                    (string->uc-string "fred flint" 5)
+                    (string->uc-string "fred flintstone" 5 10)))
+(check (string=?
+        (uc-string->string (string->uc-string "flint"))
+        (uc-string->string (string->uc-string "fred flint") 5)
+        (uc-string->string (string->uc-string "fred flintstone") 5 10)))
+(check (eq? (uc-string->symbol (string->uc-string "flint"))
+            (uc-string->symbol (string->uc-string "fred flint") 5)))
+(check (eq? (uc-string->symbol (string->uc-string "flint"))
+            (uc-string->symbol (string->uc-string "fred flintstone")
+                               5 10)))
 
 (format #t "pass: ~a~&" pass-count)
 (format #t "~a: ~a~&"
