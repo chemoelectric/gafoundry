@@ -26,6 +26,7 @@
 
           uc-string-null?
           uc-string-length
+          uc-string-resize!
 
           uc-string-every
           uc-string-any
@@ -190,16 +191,6 @@
            ((endianness)
             (native-endianness))))))
 
-    (define (bytevec-set! bv k char)
-      (bytevector-u32-set! bv (* k 4) (char->integer char)
-                           (endianness)))
-
-    (define (bytevec-ref bv k)
-      (integer->char (bytevector-u32-ref bv (* k 4) (endianness))))
-
-    (define (bytevec-cpcnt bv) ;; “Code point count”
-      (truncate-quotient (bytevector-length bv) 4))
-
     (define (check-substring-bounds str start end)
       (unless (<= 0 start end (uc-string-length str))
         (error "expected 0 <= start <= end <= (uc-string-length string)"
@@ -225,6 +216,123 @@
 
 ;;;---------------------------------------------------------------------
 
+    (define-record-factory <intvector>
+
+      (predicate> intvector?)
+
+      (constructor>
+       bytevector->intvector
+       (lambda (construct)
+         (lambda (bv)
+           (construct bv 0 (truncate-quotient
+                            (bytevector-length bv) 4)))))
+
+      (constructor>
+       make-intvector
+       (lambda (construct)
+         (lambda (len)
+           (construct (make-bytevector (* len 4)) 0 len))))
+
+      (getter> 1 %intvector-buf)
+      (setter> 1 %set-intvector-buf!)
+
+      (getter> 2 %intvector-start)
+      (setter> 2 %set-intvector-start!)
+
+      (getter> 3 %intvector-end)
+      (setter> 3 %set-intvector-end!))
+
+    (define intvector-resize!
+      (case-lambda
+        ((ivec start end)
+         (let ((len (intvector-length ivec)))
+           (unless (<= 0 start len)
+             (error "illegal start index" start len))
+           (unless (<= start end)
+             (error "start index must be <= end index" start end))
+           (if (<= end len)
+             (let ((%start (%intvector-start ivec)))
+               (%set-intvector-start! ivec (+ %start start))
+               (%set-intvector-end! ivec (+ %start end)))
+             (let* ((bv (%intvector-buf ivec))
+                    (%start (%intvector-start ivec))
+                    (%end (%intvector-end ivec))
+                    (len0 (- %end (+ %start start)))
+                    (len1 (- end start))
+                    (new-bv (make-bytevector (* 4 len1))))
+               (bytevector-copy! new-bv 0 bv (* 4 (+ %start start))
+                                 (* 4 (+ %start start len0)))
+               (do ((k len0 (+ k 1)))
+                   ((= k len1))
+                 (bytevector-u32-set!
+                  new-bv (* 4 k) (char->integer #\space) (endianness)))
+               (%set-intvector-buf! ivec new-bv)
+               (%set-intvector-start! ivec 0)
+               (%set-intvector-end! ivec len1)))))
+        ((ivec start)
+         (intvector-resize! ivec start (intvector-length ivec)))))
+
+    (define (intvector-length ivec)
+      (- (%intvector-end ivec) (%intvector-start ivec)))
+
+    (define (check-intvector-index i start end)
+      (unless (<= 0 i (- end start))
+        (error "index out of range" i (- end start))))
+
+    (define (intvector-ref ivec i)
+      (let ((start (%intvector-start ivec))
+            (end (%intvector-end ivec)))
+        (check-intvector-index i start end)
+        (bytevector-u32-ref (%intvector-buf ivec)
+                            (* 4 (+ start i))
+                            (endianness))))
+
+    (define (intvector-set! ivec i value)
+      (let ((start (%intvector-start ivec))
+            (end (%intvector-end ivec)))
+        (check-intvector-index i start end)
+        (bytevector-u32-set! (%intvector-buf ivec)
+                             (* 4 (+ start i)) value
+                             (endianness))))
+
+    (define (check-intvector-bounds ivec start end)
+      (unless (<= 0 start end (intvector-length ivec))
+        (error "illegal bounds"
+               start end (intvector-length ivec))))
+
+    (define intvector-copy
+      (case-lambda
+        ((ivec start end)
+         (check-intvector-bounds ivec start end)
+         (let ((%start (%intvector-start ivec)))
+           (let ((i (* 4 (+ %start start)))
+                 (j (* 4 (+ %start end))))
+             (bytevector->intvector
+              (bytevector-copy (%intvector-buf ivec) i j)))))
+        ((ivec start)
+         (intvector-copy ivec start (intvector-length ivec)))
+        ((ivec)
+         (intvector-copy ivec 0 (intvector-length ivec)))))
+
+    (define intvector-copy!
+      (case-lambda
+        ((to at from start end)
+         (check-intvector-bounds from start end)
+         (check-intvector-bounds to at (+ at (- end start)))
+         (let ((%at (%intvector-start to))
+               (%start (%intvector-start from)))
+           (let ((k (* 4 (+ %at at)))
+                 (i (* 4 (+ %start start)))
+                 (j (* 4 (+ %start end))))
+             (bytevector-copy! (%intvector-buf to) k
+                               (%intvector-buf from) i j))))
+        ((to at from start)
+         (intvector-copy! to at from start (intvector-length from)))
+        ((to at from)
+         (intvector-copy! to at from 0 (intvector-length from)))))
+
+;;;---------------------------------------------------------------------
+
     (define-record-factory <uc-string>
 
       (predicate> uc-string?)
@@ -235,70 +343,59 @@
          (case-lambda
            ((len char)
             (let* ((ichar (char->integer char))
-                   (len4 (* len 4))
-                   (bv (make-bytevector len4)))
-              (do ((i 0 (+ i 4)))
-                  ((= i len4))
-                (bytevector-u32-set! bv i ichar (endianness)))
-              (construct bv)))
+                   (iv (make-intvector len)))
+              (do ((i 0 (+ i 1)))
+                  ((= i len))
+                (intvector-set! iv i ichar))
+              (construct iv)))
            ((len)
-            (construct (make-bytevector (* len 4)))))))
+            (construct (make-intvector len))))))
 
       (constructor>
        uc-string-tabulate
        (lambda (construct)
          (lambda (proc len)
-           (let* ((len4 (* len 4))
-                  (bv (make-bytevector len4)))
+           (let  ((iv (make-intvector len)))
              (do ((i 0 (+ i 1)))
                  ((= i len))
-               (bytevector-u32-set! bv (* i 4)
-                                    (char->integer (proc i))
-                                    (endianness)))
-             (construct bv)))))
+               (intvector-set! iv i (char->integer (proc i))))
+             (construct iv)))))
 
       (constructor>
        list->uc-string
        (lambda (construct)
          (lambda (lst)
            (let* ((len (length lst))
-                  (len4 (* len 4))
-                  (bv (make-bytevector len4)))
+                  (iv (make-intvector len)))
              (do ((p lst (cdr p))
-                  (i 0 (+ i 4)))
+                  (i 0 (+ i 1)))
                  ((not-pair? p))
-               (bytevector-u32-set! bv i (char->integer (car p))
-                                    (endianness)))
-             (construct bv)))))
+               (intvector-set! iv i (char->integer (car p))))
+             (construct iv)))))
 
       (constructor>
        reverse-list->uc-string
        (lambda (construct)
          (lambda (lst)
            (let* ((len (length lst))
-                  (len4 (* len 4))
-                  (bv (make-bytevector len4)))
+                  (iv (make-intvector len)))
              (do ((p lst (cdr p))
-                  (i (- len4 4) (- i 4)))
+                  (i (- len 1) (- i 1)))
                  ((not-pair? p))
-               (bytevector-u32-set! bv i (char->integer (car p))
-                                    (endianness)))
-             (construct bv)))))
+               (intvector-set! iv i (char->integer (car p))))
+             (construct iv)))))
 
       (constructor>
        vector->uc-string
        (lambda (construct)
          (define (vec->str vec start end)
            (let* ((len (- end start))
-                  (len4 (* len 4))
-                  (bv (make-bytevector len4)))
+                  (iv (make-intvector len)))
              (do ((i 0 (+ i 1)))
                  ((= i len))
-               (bytevector-u32-set! bv (* i 4)
-                                    (char->integer
-                                     (vector-ref vec (+ start i)))
-                                    (endianness)))
-             (construct bv)))
+               (intvector-set! iv i (char->integer
+                                     (vector-ref vec (+ start i)))))
+             (construct iv)))
          (case-lambda
            ((vec)
             (let ((end (vector-length vec)))
@@ -316,53 +413,58 @@
        (lambda (construct)
          (case-lambda
            ((str)
-            (construct (string->utf32 str (endianness))))
+            (construct
+             (bytevector->intvector
+              (string->utf32 str (endianness)))))
            ((str start end)
-            (construct (string->utf32 (string-copy str start end)
-                                      (endianness))))
+            (construct
+             (bytevector->intvector
+              (string->utf32 (string-copy str start end)
+                             (endianness)))))
            ((str start)
-            (construct (string->utf32 (string-copy str start)
-                                      (endianness)))))))
+            (construct
+             (bytevector->intvector
+              (string->utf32 (string-copy str start)
+                             (endianness))))))))
 
       (constructor>
        uc-string-copy
        (lambda (construct)
          (case-lambda
            ((str)
-            (construct (bytevector-copy (bytevec str))))
+            (construct (intvector-copy (intvec str))))
            ((str start)
-            (construct (bytevector-copy (bytevec str) (* start 4))))
+            (construct (intvector-copy (intvec str) start)))
            ((str start end)
             (check-substring-bounds str start end)
-            (construct (bytevector-copy (bytevec str)
-                                        (* start 4) (* end 4)))))))
+            (construct (intvector-copy (intvec str) start end))))))
 
       (constructor>
        uc-string-concatenate
        (lambda (construct)
          (lambda (str*)
-           (let* ((bv* (map bytevec str*))
-                  (total-bytes
-                   (let loop ((p bv*)
+           (let* ((iv* (map intvec str*))
+                  (total-count
+                   (let loop ((p iv*)
                               (sum 0))
                      (if (not-pair? p)
                        sum
                        (loop (cdr p)
-                             (+ sum (bytevector-length (car p)))))))
-                  (out-bv (make-bytevector total-bytes 0)))
-             (let loop ((p bv*)
+                             (+ sum (intvector-length (car p)))))))
+                  (out-iv (make-intvector total-count)))
+             (let loop ((p iv*)
                         (i 0))
                (if (not-pair? p)
-                 (construct out-bv)
-                 (let* ((bv (car p))
-                        (len (bytevector-length bv)))
-                   (bytevector-copy! out-bv i bv 0 len)
+                 (construct out-iv)
+                 (let* ((iv (car p))
+                        (len (intvector-length iv)))
+                   (intvector-copy! out-iv i iv 0 len)
                    (loop (cdr p) (+ i len)))))))))
 
       (constructor>
        uc-string-join
        (let ((space (make-uc-string 1 #\space))
-             (empty-bv (make-bytevector 0)))
+             (empty-iv (make-intvector 0)))
          (lambda (construct)
            (define (check-args str* delimiter grammar)
              (unless (or (eq? grammar 'infix)
@@ -376,54 +478,54 @@
                           with strict-infix grammar")))
            (define (strjoin str* delimiter grammar)
              (check-args str* delimiter grammar)
-             (let* ((bv* (map bytevec str*))
-                    (strcnt (length bv*))
-                    (delim-bv (bytevec delimiter))
-                    (delim-len (bytevector-length delim-bv)))
+             (let* ((iv* (map intvec str*))
+                    (strcnt (length iv*))
+                    (delim-iv (intvec delimiter))
+                    (delim-len (intvector-length delim-iv)))
                (let-values
                    (((delim-count initial-len initial-delim
                                   final-len final-delim)
                      (case grammar
                        ((infix strict-infix)
                         (values (max 0 (- strcnt 1))
-                                0 empty-bv
-                                0 empty-bv))
+                                0 empty-iv
+                                0 empty-iv))
                        ((suffix)
                         (values strcnt
-                                0 empty-bv
-                                delim-len delim-bv))
+                                0 empty-iv
+                                delim-len delim-iv))
                        ((prefix)
                         (values strcnt
-                                delim-len delim-bv
-                                0 empty-bv)))))
-                 (let* ((total-bytes
-                         (let loop ((p bv*)
+                                delim-len delim-iv
+                                0 empty-iv)))))
+                 (let* ((total-count
+                         (let loop ((p iv*)
                                     (sum 0))
                            (if (not-pair? p)
                              (+ sum (* delim-count delim-len))
                              (loop (cdr p)
-                                   (+ sum (bytevector-length
+                                   (+ sum (intvector-length
                                            (car p)))))))
-                        (out-bv (make-bytevector total-bytes 0)))
-                   (bytevector-copy! out-bv 0
-                                     initial-delim 0 initial-len)
-                   (let loop ((p bv*)
+                        (out-iv (make-intvector total-count)))
+                   (intvector-copy! out-iv 0
+                                    initial-delim 0 initial-len)
+                   (let loop ((p iv*)
                               (i initial-len))
                      (if (not-pair? p)
-                       (construct out-bv)
-                       (let* ((bv (car p))
-                              (len (bytevector-length bv))
+                       (construct out-iv)
+                       (let* ((iv (car p))
+                              (len (intvector-length iv))
                               (j i))
-                         (bytevector-copy! out-bv j bv 0 len)
+                         (intvector-copy! out-iv j iv 0 len)
                          (set! j (+ i len))
                          (if (pair? (cdr p))
                            (begin
-                             (bytevector-copy! out-bv j
-                                               delim-bv 0 delim-len)
+                             (intvector-copy! out-iv j
+                                              delim-iv 0 delim-len)
                              (set! j (+ j delim-len)))
                            (begin
-                             (bytevector-copy! out-bv j
-                                               final-delim 0 final-len)
+                             (intvector-copy! out-iv j
+                                              final-delim 0 final-len)
                              (set! j (+ j final-len))))
                          (loop (cdr p) j))))))))
            (case-lambda
@@ -434,15 +536,15 @@
              ((str* delimiter grammar)
               (strjoin str* delimiter grammar))))))
 
-      (getter> 1 bytevec) )
+      (getter> 1 intvec) )
 
 ;;;---------------------------------------------------------------------
 
     (define (uc-string-length str)
-      (bytevec-cpcnt (bytevec str)))
+      (intvector-length (intvec str)))
 
     (define (uc-string-null? str)
-      (zero? (uc-string-length str)))
+      (zero? (intvector-length (intvec str))))
 
     (define (uc-string . char*)
       (list->uc-string char*))
@@ -456,24 +558,19 @@
     (define uc-string-copy!
       (case-lambda
         ((to at from start end)
-         (bytevector-copy! (bytevec to) (* at 4)
-                           (bytevec from) (* start 4) (* end 4)))
+         (intvector-copy! (intvec to) at (intvec from) start end))
         ((to at from start)
-         (bytevector-copy! (bytevec to) (* at 4)
-                           (bytevec from) (* start 4)))
+         (intvector-copy! (intvec to) at (intvec from) start))
         ((to at from)
-         (bytevector-copy! (bytevec to) (* at 4) (bytevec from)))))
+         (intvector-copy! (intvec to) at (intvec from)))))
 
     (define uc-string-fill!
       (let ((fill-it! (lambda (str fill start end)
-                        (let ((bv (bytevec str))
-                              (ifill (char->integer fill))
-                              (istart (* 4 start))
-                              (iend (* 4 end)))
-                          (do ((i istart (+ i 4)))
-                              ((= i iend))
-                            (bytevector-u32-set! bv i ifill
-                                                 (endianness)))))))
+                        (let ((iv (intvec str))
+                              (ifill (char->integer fill)))
+                          (do ((i start (+ i 1)))
+                              ((= i end))
+                            (intvector-set! iv i ifill))))))
         (case-lambda
           ((str fill)
            (let ((end (uc-string-length str)))
@@ -524,13 +621,20 @@
                      (uc-string-copy! result next-pos str 0 len)
                      (loop (cdr lst) next-pos))))))))))
 
+    (define uc-string-resize!
+      (case-lambda
+        ((str start end)
+         (intvector-resize! (intvec str) start end))
+        ((str start)
+         (intvector-resize! (intvec str) start))))
+
 ;;;---------------------------------------------------------------------
 
     (define (uc-string-set! str k char)
-      (bytevec-set! (bytevec str) k char))
+      (intvector-set! (intvec str) k (char->integer char)))
 
     (define (uc-string-ref str k)
-      (bytevec-ref (bytevec str) k))
+      (integer->char (intvector-ref (intvec str) k)))
 
 ;;;---------------------------------------------------------------------
 
@@ -684,11 +788,12 @@
       (case-lambda
         ((kons knil str start end)
          (check-substring-bounds str start end)
-         (let* ((bv (bytevec str))
-                (accum knil))
+         (let ((iv (intvec str))
+               (accum knil))
            (do ((i start (+ i 1)))
                ((= i end))
-             (set! accum (kons (bytevec-ref bv i) accum)))
+             (set! accum (kons (integer->char (intvector-ref iv i))
+                               accum)))
            accum))
         ((kons knil str start)
          (uc-string-fold kons knil str start (uc-string-length str)))
@@ -699,12 +804,13 @@
       (case-lambda
         ((kons knil str start end)
          (check-substring-bounds str start end)
-         (let* ((bv (bytevec str))
-                (accum knil)
-                (finish (- start 1)))
+         (let ((iv (intvec str))
+               (accum knil)
+               (finish (- start 1)))
            (do ((i (- end 1) (- i 1)))
                ((= i finish))
-             (set! accum (kons (bytevec-ref bv i) accum)))
+             (set! accum (kons (integer->char (intvector-ref iv i))
+                               accum)))
            accum))
         ((kons knil str start)
          (uc-string-fold-right kons knil str start
@@ -718,16 +824,16 @@
     (define uc-string=?
       (case-lambda
         ((str1 str2) 
-         (let* ((bv1 (bytevec str1))
-                (bv2 (bytevec str2))
-                (len1 (bytevector-length bv1))
-                (len2 (bytevector-length bv2)))
+         (let* ((iv1 (intvec str1))
+                (iv2 (intvec str2))
+                (len1 (intvector-length iv1))
+                (len2 (intvector-length iv2)))
            (and (= len1 len2)
                 (let loop ((i 0))
                   (cond ((= i len1) #t)
-                        ((= (bytevector-u32-ref bv1 i (endianness))
-                            (bytevector-u32-ref bv2 i (endianness)))
-                         (loop (+ i 4)))
+                        ((= (intvector-ref iv1 i)
+                            (intvector-ref iv2 i))
+                         (loop (+ i 1)))
                         (else #f))))))
         ((str1 str2 . str*)
          (let ((len (uc-string-length str1))
@@ -772,10 +878,10 @@
       (case-lambda
         ((str pred start end)
          (check-substring-bounds str start end)
-         (let ((bv (bytevec str)))
+         (let ((iv (intvec str)))
            (let loop ((i start))
              (cond ((= i end) #f)
-                   ((pred (bytevec-ref bv i)) i)
+                   ((pred (integer->char (intvector-ref iv i))) i)
                    (else (loop (+ i 1)))))))
         ((str pred start)
          (uc-string-index str pred start (uc-string-length str)))
@@ -786,11 +892,11 @@
       (case-lambda 
         ((str pred start end)
          (check-substring-bounds str start end)
-         (let ((bv (bytevec str))
+         (let ((iv (intvec str))
                (finish (- start 1)))
            (let loop ((i (- end 1)))
              (cond ((= i finish) #f)
-                   ((pred (bytevec-ref bv i)) i)
+                   ((pred (integer->char (intvector-ref iv i))) i)
                    (else (loop (- i 1)))))))
         ((str pred start)
          (uc-string-index-right str pred start (uc-string-length str)))
@@ -801,10 +907,11 @@
       (case-lambda
         ((str pred start end)
          (check-substring-bounds str start end)
-         (let ((bv (bytevec str)))
+         (let ((iv (intvec str)))
            (let loop ((i start))
              (cond ((= i end) #f)
-                   ((pred (bytevec-ref bv i)) (loop (+ i 1)))
+                   ((pred (integer->char (intvector-ref iv i)))
+                    (loop (+ i 1)))
                    (else i)))))
         ((str pred start)
          (uc-string-skip str pred start (uc-string-length str)))
@@ -815,11 +922,12 @@
       (case-lambda 
         ((str pred start end)
          (check-substring-bounds str start end)
-         (let ((bv (bytevec str))
+         (let ((iv (intvec str))
                (finish (- start 1)))
            (let loop ((i (- end 1)))
              (cond ((= i finish) #f)
-                   ((pred (bytevec-ref bv i)) (loop (- i 1)))
+                   ((pred (integer->char (intvector-ref iv i)))
+                    (loop (- i 1)))
                    (else i)))))
         ((str pred start)
          (uc-string-skip-right str pred start (uc-string-length str)))
@@ -880,13 +988,22 @@
 
     (define uc-string->string
       (case-lambda
-        ((str)
-         (utf32->string (bytevec str) (endianness)))
         ((str start end)
          (check-substring-bounds str start end)
-         (uc-string->string (uc-string-copy str start end)))
+         (let* ((iv (intvec str))
+                (bv (%intvector-buf iv))
+                (%start (%intvector-start iv))
+                (i (* 4 (+ %start start)))
+                (j (* 4 (+ %start end)))
+                (bv (if (and (zero? i)
+                             (= j (bytevector-length bv)))
+                      bv
+                      (bytevector-copy bv i j))))
+           (utf32->string bv (endianness))))
         ((str start)
-         (uc-string->string str start (uc-string-length str)))))
+         (uc-string->string str start (uc-string-length str)))
+        ((str)
+         (uc-string->string str 0 (uc-string-length str)))))
 
     (define (symbol->uc-string symbol)
       (string->uc-string (symbol->string symbol)))

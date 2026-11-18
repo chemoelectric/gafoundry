@@ -39,6 +39,8 @@
              (source "gafoundry-lib/uc-string.sld")
              (component-dependencies
               gafoundry-lib.define-record-factory))
+  (extension gafoundry-lib.co-expression
+             (source "gafoundry-lib/co-expression.sld"))
   (extension gafoundry-lib.define-record-factory
              (source "gafoundry-lib/define-record-factory.sld"))
   ))
