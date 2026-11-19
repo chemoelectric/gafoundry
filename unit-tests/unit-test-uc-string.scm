@@ -1344,6 +1344,12 @@
             (uc-string-resize! str 0 5)
             (uc-string-resize! str 0 20)
             str)))
+  (check (uc-string=?
+          ((*str->uc-str*) "     fred                ")
+          (let* ((str ((*str->uc-str*) "fred flintstone")))
+            (uc-string-resize! str 0 5)
+            (uc-string-resize! str -5 20)
+            str)))
   )
 
 (a-bunch-of-checks)
