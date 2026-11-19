@@ -1350,6 +1350,34 @@
             (uc-string-resize! str 0 5)
             (uc-string-resize! str -5 20)
             str)))
+  (check (uc-string=?
+          ((*str->uc-str*) "     fred                ")
+          (let* ((str ((*str->uc-str*) "fred flintstone")))
+            (uc-string-resize! str 0 5)
+            (uc-string-resize! str -5 20)
+            str)))
+  (check (uc-string=?
+          ((*str->uc-str*) "   ")
+          (let* ((str ((*str->uc-str*) "fred flintstone")))
+            (uc-string-resize! str 0 5)
+            (uc-string-resize! str -5 -2)
+            str)))
+  (check (uc-string=?
+          ((*str->uc-str*) "   ")
+          (let* ((str ((*str->uc-str*) "fred flintstone")))
+            (uc-string-resize! str 0 5)
+            (uc-string-resize! str 7 10)
+            str)))
+  (check (uc-string=?
+          ((*str->uc-str*) "     ")
+          (let* ((str ((*str->uc-str*) "fred flintstone")))
+            (uc-string-resize! str -10 -5)
+            str)))
+  (check (uc-string=?
+          ((*str->uc-str*) "     ")
+          (let* ((str ((*str->uc-str*) "fred flintstone")))
+            (uc-string-resize! str 100 105)
+            str)))
   )
 
 (a-bunch-of-checks)
@@ -1360,6 +1388,116 @@
                (let* ((t (string-append "xxxxxxxxxx" s "xxxxxxxxxx"))
                       (str (string->uc-string t)))
                  (uc-string-resize! str 10 (+ 10 (string-length s)))
+                 str))))
+        (case-lambda
+          ((s) (s->u s))
+          ((s start) (s->u (string-copy s start)))
+          ((s start end) (s->u (string-copy s start end)))))))
+  (a-bunch-of-checks))
+(parameterize
+    ((*str->uc-str*
+      (let ((s->u
+             (lambda (s)
+               (let* ((t (string-append s
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"))
+                      (str (string->uc-string t)))
+                 (uc-string-resize! str 0 (+ 0 (string-length s)))
+                 str))))
+        (case-lambda
+          ((s) (s->u s))
+          ((s start) (s->u (string-copy s start)))
+          ((s start end) (s->u (string-copy s start end)))))))
+  (a-bunch-of-checks))
+(parameterize
+    ((*str->uc-str*
+      (let ((s->u
+             (lambda (s)
+               (let* ((t (string-append "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        s
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"))
+                      (str (string->uc-string t)))
+                 (uc-string-resize! str 80 (+ 80 (string-length s)))
+                 str))))
+        (case-lambda
+          ((s) (s->u s))
+          ((s start) (s->u (string-copy s start)))
+          ((s start end) (s->u (string-copy s start end)))))))
+  (a-bunch-of-checks))
+(parameterize
+    ((*str->uc-str*
+      (let ((s->u
+             (lambda (s)
+               (let* ((t (string-append "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        "xxxxxxxxxx"
+                                        s))
+                      (str (string->uc-string t)))
+                 (uc-string-resize! str 80 (+ 80 (string-length s)))
+                 str))))
+        (case-lambda
+          ((s) (s->u s))
+          ((s start) (s->u (string-copy s start)))
+          ((s start end) (s->u (string-copy s start end)))))))
+  (a-bunch-of-checks))
+(parameterize
+    ((*str->uc-str*
+      (let ((s->u
+             (lambda (s)
+               (let* ((t (string-append "x" s "x"))
+                      (str (string->uc-string t)))
+                 (uc-string-resize! str 1 (+ 1 (string-length s)))
+                 str))))
+        (case-lambda
+          ((s) (s->u s))
+          ((s start) (s->u (string-copy s start)))
+          ((s start end) (s->u (string-copy s start end)))))))
+  (a-bunch-of-checks))
+(parameterize
+    ((*str->uc-str*
+      (let ((s->u
+             (lambda (s)
+               (let* ((t (string-append "x" s))
+                      (str (string->uc-string t)))
+                 (uc-string-resize! str 1 (+ 1 (string-length s)))
+                 str))))
+        (case-lambda
+          ((s) (s->u s))
+          ((s start) (s->u (string-copy s start)))
+          ((s start end) (s->u (string-copy s start end)))))))
+  (a-bunch-of-checks))
+(parameterize
+    ((*str->uc-str*
+      (let ((s->u
+             (lambda (s)
+               (let* ((t (string-append s "x"))
+                      (str (string->uc-string t)))
+                 (uc-string-resize! str 0 (+ 0 (string-length s)))
                  str))))
         (case-lambda
           ((s) (s->u s))
