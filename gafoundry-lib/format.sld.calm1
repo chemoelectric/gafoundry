@@ -27,7 +27,8 @@
           (scheme char)
           (scheme write)
           (scheme inexact)
-          (scheme complex))
+          (scheme complex)
+          (gafoundry-lib uc-string))
   (cond-expand
     (chibi (import (chibi show)
                    (chibi show pretty)))
@@ -78,7 +79,17 @@
         -e 's/^\\([[:space:]]*\x28;require\\(\\|-if\\) \\)/;;;\\1/' \
         -e 's/\x28;define \x28;string-upcase /\x28;define \x28;string-upcase-NOTUSED /' \
         -e 's/\x28;define \x28;string-downcase /\x28;define \x28;string-downcase-NOTUSED /' \
+        -e 's/\x28;define \x28;format /\x28;define \x28;format-without-uc-string-support /' \
         gafoundry-lib/strcase.scm \
         gafoundry-lib/format.scm|")
+
+    (define (uc->str x)
+      (if (uc-string? x)
+        (uc-string->string x)
+        x))
+
+    (define (format . args)
+      (apply format-without-uc-string-support
+             (map uc->str args)))
 
     ))

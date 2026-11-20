@@ -27,7 +27,8 @@
           (scheme char)
           (scheme write)
           (scheme inexact)
-          (scheme complex))
+          (scheme complex)
+          (gafoundry-lib uc-string))
   (cond-expand
     (chibi (import (chibi show)
                    (chibi show pretty)))
@@ -336,7 +337,7 @@
   '(100 100 10 10 1 1 #f))
 
 ;@
-(define (format . args)
+(define (format-without-uc-string-support . args)
   (define format:port #f)		; curr. format output port
   (define format:output-col 0)	      ; curr. format output tty column
   (define format:flush-output #f)  ; flush output at end of formatting
@@ -1863,5 +1864,14 @@
 		  (set! non-first-alpha #t)
 		  (string-set! cap-str i (char-upcase c)))))))))
 
+
+    (define (uc->str x)
+      (if (uc-string? x)
+        (uc-string->string x)
+        x))
+
+    (define (format . args)
+      (apply format-without-uc-string-support
+             (map uc->str args)))
 
     ))

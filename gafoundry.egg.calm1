@@ -32,7 +32,9 @@
   (extension gafoundry-lib.xml-parse
              (source "gafoundry-lib/xml-parse.sld"))
   (extension gafoundry-lib.format
-             (source "gafoundry-lib/format.sld"))
+             (source "gafoundry-lib/format.sld")
+             (component-dependencies
+              gafoundry-lib.uc-string))
   (extension gafoundry-lib.match
              (source "gafoundry-lib/match.sld"))
   (extension gafoundry-lib.uc-string
