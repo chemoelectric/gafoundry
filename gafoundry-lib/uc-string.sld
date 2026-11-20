@@ -138,10 +138,17 @@
           (gafoundry-lib define-record-factory))
   (cond-expand
     ((library (srfi 1))
-     (import (srfi 1)))
+     (import (only (srfi 1)
+                   not-pair? null-list? every
+                   unfold last drop-right)))
     ((library (scheme list))
-     (import (scheme list)))
-    (else (import (srfi srfi-1))))
+     (import (only (scheme list)
+                   not-pair? null-list? every
+                   unfold last drop-right)))
+    (else
+     (import (only (srfi srfi-1)
+                   not-pair? null-list? every
+                   unfold last drop-right))))
   (cond-expand
     ((library (scheme division))
      (import (scheme division)))
@@ -155,7 +162,15 @@
     ((library (rnrs bytevectors))
      (import (except (rnrs bytevectors)
                      bytevector-copy!)))
-    (chicken (import (r6rs bytevectors))))
+    (chicken (import (r6rs bytevectors)))
+    (gambit
+     ;; You can get the (r6rs bytevectors) implementation from Snow.
+     ;; For instance:
+     ;;
+     ;;   snow-chibi install --implementations=gambit r6rs.bytevectors
+     ;;
+     (import (except (r6rs bytevectors)
+                     bytevector-copy!))))
 
   (begin
 
@@ -1875,491 +1890,491 @@
 ;;;
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
-; Help procedures (not part of R6RS)
-;
+                                        ;
+                                        ; Help procedures (not part of R6RS)
+                                        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Given an exact integer key and a vector of exact integers
-; in strictly increasing order, returns the largest i such
-; that element i of the vector is less than or equal to key,
-; or -1 if key is less than every element of the vector.
+                                        ; Given an exact integer key and a vector of exact integers
+                                        ; in strictly increasing order, returns the largest i such
+                                        ; that element i of the vector is less than or equal to key,
+                                        ; or -1 if key is less than every element of the vector.
 
-(define (binary-search-of-vector key vec)
+    (define (binary-search-of-vector key vec)
 
-  ; Loop invariants:
-  ; 0 <= i < j <= (vector-length vec)
-  ; vec[i] <= key
-  ; if j < (vector-length vec), then key < vec[j]
+                                        ; Loop invariants:
+                                        ; 0 <= i < j <= (vector-length vec)
+                                        ; vec[i] <= key
+                                        ; if j < (vector-length vec), then key < vec[j]
 
-  (define (loop i j)
-    (let ((mid (euclidean-quotient (+ i j) 2)))
-      (cond ((= i mid)
-             mid)
-            ((<= (vector-ref vec mid) key)
-             (loop mid j))
-            (else
-             (loop i mid)))))
+      (define (loop i j)
+        (let ((mid (euclidean-quotient (+ i j) 2)))
+          (cond ((= i mid)
+                 mid)
+                ((<= (vector-ref vec mid) key)
+                 (loop mid j))
+                (else
+                 (loop i mid)))))
 
-  (let ((hi (vector-length vec)))
-    (if (or (= hi 0) (< key (vector-ref vec 0)))
-        -1
-        (loop 0 hi))))
+      (let ((hi (vector-length vec)))
+        (if (or (= hi 0) (< key (vector-ref vec 0)))
+          -1
+          (loop 0 hi))))
 
-; Given an exact integer key and a vector of exact integers
-; in strictly increasing order, returns the index of key,
-; or returns #f if the key is not within the vector.
+                                        ; Given an exact integer key and a vector of exact integers
+                                        ; in strictly increasing order, returns the index of key,
+                                        ; or returns #f if the key is not within the vector.
 
-(define (binary-search key vec)
+    (define (binary-search key vec)
 
-  ; Loop invariants:
-  ; 0 <= i < j <= (vector-length vec)
-  ; vec[i] <= key
-  ; if j < (vector-length vec), then key < vec[j]
+                                        ; Loop invariants:
+                                        ; 0 <= i < j <= (vector-length vec)
+                                        ; vec[i] <= key
+                                        ; if j < (vector-length vec), then key < vec[j]
 
-  (define (loop i j)
-    (let ((mid (euclidean-quotient (+ i j) 2)))
-      (cond ((= i mid)
-             (if (= key (vector-ref vec mid))
-                 mid
-                 #f))
-            ((<= (vector-ref vec mid) key)
-             (loop mid j))
-            (else
-             (loop i mid)))))
+      (define (loop i j)
+        (let ((mid (euclidean-quotient (+ i j) 2)))
+          (cond ((= i mid)
+                 (if (= key (vector-ref vec mid))
+                   mid
+                   #f))
+                ((<= (vector-ref vec mid) key)
+                 (loop mid j))
+                (else
+                 (loop i mid)))))
 
-  (let ((hi (vector-length vec)))
-    (if (or (= hi 0) (< key (vector-ref vec 0)))
-        #f
-        (loop 0 hi))))
+      (let ((hi (vector-length vec)))
+        (if (or (= hi 0) (< key (vector-ref vec 0)))
+          #f
+          (loop 0 hi))))
 
-; Given an exact integer key and a bytevector of 16-bit unsigned
-; big-endian integers in strictly increasing order,
-; returns i such that elements (* 2 i) and (+ (* 2 i) 1)
-; are equal to the key, or returns #f if the key is not found.
+                                        ; Given an exact integer key and a bytevector of 16-bit unsigned
+                                        ; big-endian integers in strictly increasing order,
+                                        ; returns i such that elements (* 2 i) and (+ (* 2 i) 1)
+                                        ; are equal to the key, or returns #f if the key is not found.
 
-(define (binary-search-16bit key bvec)
+    (define (binary-search-16bit key bvec)
 
-  (define (bytevector-ref16 bvec i)
-    (let ((i2 (+ i i)))
-      (+ (* 256 (bytevector-u8-ref bvec i2))
-         (bytevector-u8-ref bvec (+ i2 1)))))
+      (define (bytevector-ref16 bvec i)
+        (let ((i2 (+ i i)))
+          (+ (* 256 (bytevector-u8-ref bvec i2))
+             (bytevector-u8-ref bvec (+ i2 1)))))
 
-  (define (loop i j)
-    (let ((mid (euclidean-quotient (+ i j) 2)))
-      (cond ((= i mid)
-             (if (= (bytevector-ref16 bvec mid) key)
-                 mid
-                 #f))
-            ((<= (bytevector-ref16 bvec mid) key)
-             (loop mid j))
-            (else
-             (loop i mid)))))
+      (define (loop i j)
+        (let ((mid (euclidean-quotient (+ i j) 2)))
+          (cond ((= i mid)
+                 (if (= (bytevector-ref16 bvec mid) key)
+                   mid
+                   #f))
+                ((<= (bytevector-ref16 bvec mid) key)
+                 (loop mid j))
+                (else
+                 (loop i mid)))))
 
-  (let ((hi (euclidean-quotient (bytevector-length bvec) 2)))
-    (if (or (= hi 0) (< key (bytevector-ref16 bvec 0)))
-        #f
-        (loop 0 hi))))
+      (let ((hi (euclidean-quotient (bytevector-length bvec) 2)))
+        (if (or (= hi 0) (< key (bytevector-ref16 bvec 0)))
+          #f
+          (loop 0 hi))))
 
-; Given a binary comparison predicate, returns a predicate
-; that accepts two or more arguments.
+                                        ; Given a binary comparison predicate, returns a predicate
+                                        ; that accepts two or more arguments.
 
-(define (make-comparison-predicate binop)
-  (letrec ((loop (lambda (first rest)
-		   (cond ((null? rest)
-			  #t)
-			 ((binop first (car rest))
-			  (loop (car rest) (cdr rest)))
-			 (else
-			  #f)))))
-    (lambda (a b . rest)
-      (if (null? rest)
-	  (binop a b)
-	  (and (binop a b)
-	       (loop b rest))))))
+    (define (make-comparison-predicate binop)
+      (letrec ((loop (lambda (first rest)
+		       (cond ((null? rest)
+			      #t)
+			     ((binop first (car rest))
+			      (loop (car rest) (cdr rest)))
+			     (else
+			      #f)))))
+        (lambda (a b . rest)
+          (if (null? rest)
+	    (binop a b)
+	    (and (binop a b)
+	         (loop b rest))))))
 
-; Copyright (c) 2006 Michael Sperber
-; All rights reserved.
-; 
-; Redistribution and use in source and binary forms, with or without
-; modification, are permitted provided that the following conditions
-; are met:
-; 1. Redistributions of source code must retain the above copyright
-;    notice, this list of conditions and the following disclaimer.
-; 2. Redistributions in binary form must reproduce the above copyright
-;    notice, this list of conditions and the following disclaimer in the
-;    documentation and/or other materials provided with the distribution.
-; 3. The name of the authors may not be used to endorse or promote products
-;    derived from this software without specific prior written permission.
-; 
-; THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
-; IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-; OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-; INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-; NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-; DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-;
+                                        ; Copyright (c) 2006 Michael Sperber
+                                        ; All rights reserved.
+                                        ; 
+                                        ; Redistribution and use in source and binary forms, with or without
+                                        ; modification, are permitted provided that the following conditions
+                                        ; are met:
+                                        ; 1. Redistributions of source code must retain the above copyright
+                                        ;    notice, this list of conditions and the following disclaimer.
+                                        ; 2. Redistributions in binary form must reproduce the above copyright
+                                        ;    notice, this list of conditions and the following disclaimer in the
+                                        ;    documentation and/or other materials provided with the distribution.
+                                        ; 3. The name of the authors may not be used to endorse or promote products
+                                        ;    derived from this software without specific prior written permission.
+                                        ; 
+                                        ; THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+                                        ; IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+                                        ; OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+                                        ; IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+                                        ; INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+                                        ; NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+                                        ; DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+                                        ; THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+                                        ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+                                        ; THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+                                        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 
-; From: Michael Sperber <sperber@informatik.uni-tuebingen.de>
-; To: "William D. Clinger" <will@ccs.neu.edu>
-; Subject: Unicode normalization
-; Date: Tue, 20 Jun 2006 19:59:15 +0200
-; 
-; 
-; I've attached the code I wrote....
-;
+                                        ; 
+                                        ; From: Michael Sperber <sperber@informatik.uni-tuebingen.de>
+                                        ; To: "William D. Clinger" <will@ccs.neu.edu>
+                                        ; Subject: Unicode normalization
+                                        ; Date: Tue, 20 Jun 2006 19:59:15 +0200
+                                        ; 
+                                        ; 
+                                        ; I've attached the code I wrote....
+                                        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
-; Revised by Will Clinger, 20 June - 11 September 2006.
-;
-; Modifications include:
-;     deletion of tables (that occupied at least 136208 bytes)
-;     addition of tables (that occupy about 60 kilobytes)
-;     deletion of several procedures:
-;         sv-normalization-info
-;         sv-has-canonical-decomposition?
-;         sv-has-compatibility-decomposition?
-;         sv-canonical-decomposition-encoding
-;     complete rewrites of several procedures:
-;         binary-search (since moved to unicode0.sch)
-;         sv-combining-class
-;         reverse-decomposition
-;         compose-2
-;     addition of several procedures:
-;         sv-decomposition-index-of-index
-;         sv-decomposition-sequence-range
-;
-; The above changes reduced the table sizes by a factor of 2,
-; and sped up the tests in NormalizationTests.txt by a factor of 2.
-;
-; The tables in this file were generated from the
-; Unicode Character Database, revision 7.0.0.
-;
-; This file does not rely on any lexical syntax for
-; non-Ascii characters and strings.
-;
+                                        ;
+                                        ; Revised by Will Clinger, 20 June - 11 September 2006.
+                                        ;
+                                        ; Modifications include:
+                                        ;     deletion of tables (that occupied at least 136208 bytes)
+                                        ;     addition of tables (that occupy about 60 kilobytes)
+                                        ;     deletion of several procedures:
+                                        ;         sv-normalization-info
+                                        ;         sv-has-canonical-decomposition?
+                                        ;         sv-has-compatibility-decomposition?
+                                        ;         sv-canonical-decomposition-encoding
+                                        ;     complete rewrites of several procedures:
+                                        ;         binary-search (since moved to unicode0.sch)
+                                        ;         sv-combining-class
+                                        ;         reverse-decomposition
+                                        ;         compose-2
+                                        ;     addition of several procedures:
+                                        ;         sv-decomposition-index-of-index
+                                        ;         sv-decomposition-sequence-range
+                                        ;
+                                        ; The above changes reduced the table sizes by a factor of 2,
+                                        ; and sped up the tests in NormalizationTests.txt by a factor of 2.
+                                        ;
+                                        ; The tables in this file were generated from the
+                                        ; Unicode Character Database, revision 7.0.0.
+                                        ;
+                                        ; This file does not rely on any lexical syntax for
+                                        ; non-Ascii characters and strings.
+                                        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Normalization Form D (NFD): Canonical Decomposition
+                                        ; Normalization Form D (NFD): Canonical Decomposition
 
-(define (uc-string-normalize-nfd s)
-  (decompose #f s))
+    (define (uc-string-normalize-nfd s)
+      (decompose #f s))
 
-; Normalization Form KD (NFKD): Compatibility Decomposition
+                                        ; Normalization Form KD (NFKD): Compatibility Decomposition
 
-(define (uc-string-normalize-nfkd s)
-  (decompose #t s))
+    (define (uc-string-normalize-nfkd s)
+      (decompose #t s))
 
-; Normalization Form C (NFC): Canonical Decomposition,
-; followed by Canonical Composition
+                                        ; Normalization Form C (NFC): Canonical Decomposition,
+                                        ; followed by Canonical Composition
 
-(define (uc-string-normalize-nfc s)
-  (compose-after uc-string-normalize-nfd s))
+    (define (uc-string-normalize-nfc s)
+      (compose-after uc-string-normalize-nfd s))
 
-; Normalization Form KC (NFKC): Compatibility Decomposition,
-; followed by Canonical Composition
+                                        ; Normalization Form KC (NFKC): Compatibility Decomposition,
+                                        ; followed by Canonical Composition
 
-(define (uc-string-normalize-nfkc s)
-  (compose-after uc-string-normalize-nfkd s))
+    (define (uc-string-normalize-nfkc s)
+      (compose-after uc-string-normalize-nfkd s))
 
-(define (decompose compat? s)
-  (let ((size (uc-string-length s)))
-    (define (fast-loop i)
-      (if (= i size)
-          s
-          (let* ((c (uc-string-ref s i))
-                 (sv (char->integer c)))
-            (if (< sv 128)
+    (define (decompose compat? s)
+      (let ((size (uc-string-length s)))
+        (define (fast-loop i)
+          (if (= i size)
+            s
+            (let* ((c (uc-string-ref s i))
+                   (sv (char->integer c)))
+              (if (< sv 128)
                 (fast-loop (+ i 1))
                 (let ((index2 (sv-decomposition-index-of-index sv))
                       (class (sv-combining-class sv)))
                   (if (or index2 (< 0 class) (sv-hangul-syllable? sv))
-                      (slow-loop 0 '())
-                      (fast-loop (+ i 1))))))))
-    (define (slow-loop i rev-chars)
-      (if (>= i size)
-          (reorder-according-to-combining-class!
-           (list->uc-string (reverse rev-chars)))
-          (let* ((c (uc-string-ref s i))
-                 (sv (char->integer c)))
-            (if (sv-hangul-syllable? sv)
+                    (slow-loop 0 '())
+                    (fast-loop (+ i 1))))))))
+        (define (slow-loop i rev-chars)
+          (if (>= i size)
+            (reorder-according-to-combining-class!
+             (list->uc-string (reverse rev-chars)))
+            (let* ((c (uc-string-ref s i))
+                   (sv (char->integer c)))
+              (if (sv-hangul-syllable? sv)
                 (slow-loop (+ 1 i)
                            (prepend-reverse-jamo-decomposition sv rev-chars))
                 (slow-loop (+ 1 i)
                            (append (reverse-decomposition compat? sv)
                                    rev-chars))))))
-    (fast-loop 0)))
+        (fast-loop 0)))
 
-; bubble-sort decompositions according to combining class
-; returns the modified string
+                                        ; bubble-sort decompositions according to combining class
+                                        ; returns the modified string
 
-(define (reorder-according-to-combining-class! s)
-  (let ((size (uc-string-length s)))
-    (let repeat ()
-      (let loop ((i 0)
-                 (swapped? #f))
-        (cond
-         ((< (+ i 1) size)
-          (let ((sv-i (char->integer (uc-string-ref s i)))
-                (sv-i+1 (char->integer (uc-string-ref s (+ i 1)))))
-            (let ((cc-i (sv-combining-class sv-i))
-                  (cc-i+1 (sv-combining-class sv-i+1)))
-              (if (and (not (zero? cc-i))
-                       (not (zero? cc-i+1))
-                       (< cc-i+1 cc-i))
-                  (begin
-                    (uc-string-set! s i (integer->char sv-i+1))
-                    (uc-string-set! s (+ i 1) (integer->char sv-i))
-                    (loop (+ 1 i) #t))
-                  (loop (+ 1 i) swapped?)))))
-         (swapped? (repeat))
-         (else
- s))))))
+    (define (reorder-according-to-combining-class! s)
+      (let ((size (uc-string-length s)))
+        (let repeat ()
+          (let loop ((i 0)
+                     (swapped? #f))
+            (cond
+              ((< (+ i 1) size)
+               (let ((sv-i (char->integer (uc-string-ref s i)))
+                     (sv-i+1 (char->integer (uc-string-ref s (+ i 1)))))
+                 (let ((cc-i (sv-combining-class sv-i))
+                       (cc-i+1 (sv-combining-class sv-i+1)))
+                   (if (and (not (zero? cc-i))
+                            (not (zero? cc-i+1))
+                            (< cc-i+1 cc-i))
+                     (begin
+                       (uc-string-set! s i (integer->char sv-i+1))
+                       (uc-string-set! s (+ i 1) (integer->char sv-i))
+                       (loop (+ 1 i) #t))
+                     (loop (+ 1 i) swapped?)))))
+              (swapped? (repeat))
+              (else
+               s))))))
 
-; Given a normalizer that acts as the identity on Ascii strings,
-; and a string,
-; returns the canonical composition of the normalized string.
+                                        ; Given a normalizer that acts as the identity on Ascii strings,
+                                        ; and a string,
+                                        ; returns the canonical composition of the normalized string.
 
-(define (compose-after normalizer s)
-  (let ((size (uc-string-length s)))
-    (define (fast-loop i)
-      (if (= i size)
-          s
-          (let* ((c (uc-string-ref s i))
-                 (sv (char->integer c)))
-            (if (< sv 128)
+    (define (compose-after normalizer s)
+      (let ((size (uc-string-length s)))
+        (define (fast-loop i)
+          (if (= i size)
+            s
+            (let* ((c (uc-string-ref s i))
+                   (sv (char->integer c)))
+              (if (< sv 128)
                 (fast-loop (+ i 1))
                 (slow-case)))))
-    (define (slow-case)
-      (let ((s2 (normalizer s)))
-        (if (and (eq? s s2))
-            (compose s)
-            (compose! s2))))
-    (fast-loop 0)))
+        (define (slow-case)
+          (let ((s2 (normalizer s)))
+            (if (and (eq? s s2))
+              (compose s)
+              (compose! s2))))
+        (fast-loop 0)))
 
-; Given a string, returns its canonical composition
-; without modifying the given string.
+                                        ; Given a string, returns its canonical composition
+                                        ; without modifying the given string.
 
-(define (compose s)
-  (let ((size (uc-string-length s)))
-    (define (fast-loop i)
-      (if (= i size)
-          s
-          (let* ((c (uc-string-ref s i))
-                 (sv (char->integer c)))
-            (cond ((< sv #x300)              ; implies combining class is 0
-                   (fast-loop (+ i 1)))
-                  (else
-                   (compose! (uc-string-copy s)))))))
-    (fast-loop 0)))
+    (define (compose s)
+      (let ((size (uc-string-length s)))
+        (define (fast-loop i)
+          (if (= i size)
+            s
+            (let* ((c (uc-string-ref s i))
+                   (sv (char->integer c)))
+              (cond ((< sv #x300)              ; implies combining class is 0
+                     (fast-loop (+ i 1)))
+                    (else
+                     (compose! (uc-string-copy s)))))))
+        (fast-loop 0)))
 
-; Given a mutable string, performs canonical composition on the
-; string (destructively) and returns the string or a uc-string-copy.
+                                        ; Given a mutable string, performs canonical composition on the
+                                        ; string (destructively) and returns the string or a uc-string-copy.
 
-(define (compose! s)
-  (let ((size (uc-string-length s)))
-    (let loop ((p 0)    ; output index for finished combined character
-               (p2 1)         ; output index for uncombined characters
-               (i 0)              ; input index for starting character
-               (j 1))      ; input index for characters to be combined 
+    (define (compose! s)
+      (let ((size (uc-string-length s)))
+        (let loop ((p 0)    ; output index for finished combined character
+                   (p2 1)         ; output index for uncombined characters
+                   (i 0)              ; input index for starting character
+                   (j 1))      ; input index for characters to be combined 
 
-      ; presumed to be invariant:
-      ; p <= i <= size
-      ; i < j                 (Note: j may exceed size)
-      ; p < p2                (Note: p2 may exceed size)
+                                        ; presumed to be invariant:
+                                        ; p <= i <= size
+                                        ; i < j                 (Note: j may exceed size)
+                                        ; p < p2                (Note: p2 may exceed size)
 
-      (if (< i size)
-          (let* ((sv-i (char->integer (uc-string-ref s i)))
-                 (cc-i (sv-combining-class sv-i)))
-            (if (zero? cc-i)
+          (if (< i size)
+            (let* ((sv-i (char->integer (uc-string-ref s i)))
+                   (cc-i (sv-combining-class sv-i)))
+              (if (zero? cc-i)
                 (if (>= j size)
-                    (begin
-                      ;; we're done combining with sv-i; skip past
-                      ;; combining sequences in both input and output
-                      (uc-string-set! s p (integer->char sv-i))
-                      (uc-string-copy s 0 (min size (max (+ p 1) p2))))
-                    (let* ((sv-j (char->integer (uc-string-ref s j)))
-                           (cc-j (sv-combining-class sv-j)))
-                      (cond
-                       ((and (= j (+ i 1))
-                             (sv-jamo-initial-consonant? sv-i)
-                             (sv-jamo-vowel? sv-j))
-                        ;; need Hangul composition
-                        (if (and (< (+ j 1) size)
-                                 (sv-jamo-trailing-consonant?
-                                  (char->integer (uc-string-ref s (+ j 1)))))
-                            ;; 3-char composition
-                            (let ((composite
-                                   (+ jamo-syllable-start
-                                      (* (- sv-i jamo-initial-consonant-start)
-                                         jamo-syllable-per-count)
-                                      (* (- sv-j jamo-vowel-start)
-                                         jamo-trailing-consonant-count)
-                                      (- (char->integer
-                                          (uc-string-ref s (+ j 1)))
-                                         jamo-trailing-consonant-start))))
-                              (uc-string-set! s i (integer->char composite))
-                              (loop p p2 i (+ j 2)))
-                            ;; 2-char composition
-                            (let ((composite
-                                   (+ jamo-syllable-start
-                                      (* (- sv-i jamo-initial-consonant-start)
-                                         jamo-syllable-per-count)
-                                      (* (- sv-j jamo-vowel-start)
-                                         jamo-trailing-consonant-count))))
-                              (uc-string-set! s i (integer->char composite))
-                              (loop p p2 i (+ j 1)))))
-                       ((let ((previous-cc
-                               (sv-combining-class
-                                (char->integer (uc-string-ref s (- j 1))))))
-                          ;; check if blocked
-                          (and (<= previous-cc cc-j)
-                               (compose-2 sv-i sv-j)))
-                        ;; we can combine; store result temporarily at i;
-                        ;; advance past the combining mark
-                        => (lambda (combined)
-                             (uc-string-set! s i (integer->char combined))
-                             (loop p p2 i (+ j 1))))
-                       ((zero? cc-j)
-                        ;; both are combining class 0; we're done
-                        ;; combining with sv-i; skip past combining sequences
-                        ;; in both input and output
-                        (uc-string-set! s p (integer->char sv-i))
-                        (loop p2 (+ p2 1) j (+ 1 j)))
-                       (else
-                        (let skip ((j j) (p2 p2))
-                          (if (< j size)
-                              (let ((sv-j
-                                     (char->integer (uc-string-ref s j))))
-                                (if (= (sv-combining-class sv-j) cc-j)
-                                    (begin
-                                      (uc-string-set! s
-                                                   p2
-                                                   (integer->char sv-j))
-                                      (skip (+ j 1) (+ p2 1)))
-                                    (loop p p2 i j)))
-                              (loop p p2 i j)))))))
+                  (begin
+                    ;; we're done combining with sv-i; skip past
+                    ;; combining sequences in both input and output
+                    (uc-string-set! s p (integer->char sv-i))
+                    (uc-string-copy s 0 (min size (max (+ p 1) p2))))
+                  (let* ((sv-j (char->integer (uc-string-ref s j)))
+                         (cc-j (sv-combining-class sv-j)))
+                    (cond
+                      ((and (= j (+ i 1))
+                            (sv-jamo-initial-consonant? sv-i)
+                            (sv-jamo-vowel? sv-j))
+                       ;; need Hangul composition
+                       (if (and (< (+ j 1) size)
+                                (sv-jamo-trailing-consonant?
+                                 (char->integer (uc-string-ref s (+ j 1)))))
+                         ;; 3-char composition
+                         (let ((composite
+                                (+ jamo-syllable-start
+                                   (* (- sv-i jamo-initial-consonant-start)
+                                      jamo-syllable-per-count)
+                                   (* (- sv-j jamo-vowel-start)
+                                      jamo-trailing-consonant-count)
+                                   (- (char->integer
+                                       (uc-string-ref s (+ j 1)))
+                                      jamo-trailing-consonant-start))))
+                           (uc-string-set! s i (integer->char composite))
+                           (loop p p2 i (+ j 2)))
+                         ;; 2-char composition
+                         (let ((composite
+                                (+ jamo-syllable-start
+                                   (* (- sv-i jamo-initial-consonant-start)
+                                      jamo-syllable-per-count)
+                                   (* (- sv-j jamo-vowel-start)
+                                      jamo-trailing-consonant-count))))
+                           (uc-string-set! s i (integer->char composite))
+                           (loop p p2 i (+ j 1)))))
+                      ((let ((previous-cc
+                              (sv-combining-class
+                               (char->integer (uc-string-ref s (- j 1))))))
+                         ;; check if blocked
+                         (and (<= previous-cc cc-j)
+                              (compose-2 sv-i sv-j)))
+                       ;; we can combine; store result temporarily at i;
+                       ;; advance past the combining mark
+                       => (lambda (combined)
+                            (uc-string-set! s i (integer->char combined))
+                            (loop p p2 i (+ j 1))))
+                      ((zero? cc-j)
+                       ;; both are combining class 0; we're done
+                       ;; combining with sv-i; skip past combining sequences
+                       ;; in both input and output
+                       (uc-string-set! s p (integer->char sv-i))
+                       (loop p2 (+ p2 1) j (+ 1 j)))
+                      (else
+                       (let skip ((j j) (p2 p2))
+                         (if (< j size)
+                           (let ((sv-j
+                                  (char->integer (uc-string-ref s j))))
+                             (if (= (sv-combining-class sv-j) cc-j)
+                               (begin
+                                 (uc-string-set! s
+                                                 p2
+                                                 (integer->char sv-j))
+                                 (skip (+ j 1) (+ p2 1)))
+                               (loop p p2 i j)))
+                           (loop p p2 i j)))))))
                 (loop (+ p 1) (+ p2 1) (+ i 1) (+ j 1))))
-          (uc-string-copy s 0 (min size p2))))))
+            (uc-string-copy s 0 (min size p2))))))
 
-;; Hangul constants
-;; from Unicode Standard Annex #15
+    ;; Hangul constants
+    ;; from Unicode Standard Annex #15
 
-(define jamo-syllable-start #xAC00)
-(define jamo-initial-consonant-start #x1100)
-(define jamo-initial-consonant-count 19)
-(define jamo-initial-consonant-end
-  (+ jamo-initial-consonant-start jamo-initial-consonant-count))
-(define jamo-trailing-consonant-start #x11A7)
-(define jamo-trailing-consonant-count 28)
-(define jamo-trailing-consonant-end
-  (+ jamo-trailing-consonant-start jamo-trailing-consonant-count))
-(define jamo-vowel-start #x1161)
-(define jamo-vowel-count 21)
-(define jamo-vowel-end (+ jamo-vowel-start jamo-vowel-count))
+    (define jamo-syllable-start #xAC00)
+    (define jamo-initial-consonant-start #x1100)
+    (define jamo-initial-consonant-count 19)
+    (define jamo-initial-consonant-end
+      (+ jamo-initial-consonant-start jamo-initial-consonant-count))
+    (define jamo-trailing-consonant-start #x11A7)
+    (define jamo-trailing-consonant-count 28)
+    (define jamo-trailing-consonant-end
+      (+ jamo-trailing-consonant-start jamo-trailing-consonant-count))
+    (define jamo-vowel-start #x1161)
+    (define jamo-vowel-count 21)
+    (define jamo-vowel-end (+ jamo-vowel-start jamo-vowel-count))
 
-;; number of syllables with a given initial consonant
-(define jamo-syllable-per-count
-  (* jamo-vowel-count jamo-trailing-consonant-count))
-(define jamo-syllable-count
-  (* jamo-initial-consonant-count jamo-syllable-per-count))
-(define jamo-syllable-end (+ jamo-syllable-start jamo-syllable-count))
+    ;; number of syllables with a given initial consonant
+    (define jamo-syllable-per-count
+      (* jamo-vowel-count jamo-trailing-consonant-count))
+    (define jamo-syllable-count
+      (* jamo-initial-consonant-count jamo-syllable-per-count))
+    (define jamo-syllable-end (+ jamo-syllable-start jamo-syllable-count))
 
-(define (sv-jamo-initial-consonant? sv)
-  (and (>= sv jamo-initial-consonant-start)
-       (< sv jamo-initial-consonant-end)))
-(define (sv-jamo-trailing-consonant? sv)
-  (and (>= sv jamo-trailing-consonant-start)
-       (< sv jamo-trailing-consonant-end)))
-(define (sv-jamo-vowel? sv)
-  (and (>= sv jamo-vowel-start)
-       (< sv jamo-vowel-end)))
+    (define (sv-jamo-initial-consonant? sv)
+      (and (>= sv jamo-initial-consonant-start)
+           (< sv jamo-initial-consonant-end)))
+    (define (sv-jamo-trailing-consonant? sv)
+      (and (>= sv jamo-trailing-consonant-start)
+           (< sv jamo-trailing-consonant-end)))
+    (define (sv-jamo-vowel? sv)
+      (and (>= sv jamo-vowel-start)
+           (< sv jamo-vowel-end)))
 
-(define (sv-hangul-syllable? sv)
-  (and (>= sv  jamo-syllable-start)
-       (< sv jamo-syllable-end)))
+    (define (sv-hangul-syllable? sv)
+      (and (>= sv  jamo-syllable-start)
+           (< sv jamo-syllable-end)))
 
-(define (prepend-reverse-jamo-decomposition sv rev-chars)
-  (let* ((offset (- sv jamo-syllable-start))
-         (l (+ jamo-initial-consonant-start
-               (euclidean-quotient offset jamo-syllable-per-count)))
-         (v (+ jamo-vowel-start
-               (euclidean-quotient (euclidean-remainder offset jamo-syllable-per-count)
-                    jamo-trailing-consonant-count)))
-         (t (+ jamo-trailing-consonant-start
-               (euclidean-remainder offset jamo-trailing-consonant-count)))
-         (either-way
-          (cons (integer->char v)
-                (cons (integer->char l)
-                      rev-chars))))
-    (if (= t jamo-trailing-consonant-start)
-        either-way
-        (cons (integer->char t) either-way))))
+    (define (prepend-reverse-jamo-decomposition sv rev-chars)
+      (let* ((offset (- sv jamo-syllable-start))
+             (l (+ jamo-initial-consonant-start
+                   (euclidean-quotient offset jamo-syllable-per-count)))
+             (v (+ jamo-vowel-start
+                   (euclidean-quotient (euclidean-remainder offset jamo-syllable-per-count)
+                                       jamo-trailing-consonant-count)))
+             (t (+ jamo-trailing-consonant-start
+                   (euclidean-remainder offset jamo-trailing-consonant-count)))
+             (either-way
+              (cons (integer->char v)
+                    (cons (integer->char l)
+                          rev-chars))))
+        (if (= t jamo-trailing-consonant-start)
+          either-way
+          (cons (integer->char t) either-way))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;
-; Copyright 2006 William D Clinger.
-;
-; Permission to copy this software, in whole or in part, to use this
-; software for any lawful purpose, and to redistribute this software
-; is granted subject to the restriction that all copies made of this
-; software must include this copyright notice in full.
-;
-; I also request that you send me a copy of any improvements that you
-; make to this software so that they may be incorporated within it to
-; the benefit of the Scheme community.
-;
+                                        ;
+                                        ; Copyright 2006 William D Clinger.
+                                        ;
+                                        ; Permission to copy this software, in whole or in part, to use this
+                                        ; software for any lawful purpose, and to redistribute this software
+                                        ; is granted subject to the restriction that all copies made of this
+                                        ; software must include this copyright notice in full.
+                                        ;
+                                        ; I also request that you send me a copy of any improvements that you
+                                        ; make to this software so that they may be incorporated within it to
+                                        ; the benefit of the Scheme community.
+                                        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Given a Unicode scalar value, returns its combining class.
+                                        ; Given a Unicode scalar value, returns its combining class.
 
-(define (sv-combining-class s)
-  (let ((index (binary-search s combining-class-is-nonzero)))
-    (if index
-        (bytevector-u8-ref combining-class-values index)
-        0)))
+    (define (sv-combining-class s)
+      (let ((index (binary-search s combining-class-is-nonzero)))
+        (if index
+          (bytevector-u8-ref combining-class-values index)
+          0)))
 
-; Given a Unicode scalar value, returns the index of the index
-; of its decomposition sequence if it has one, else returns #f.
+                                        ; Given a Unicode scalar value, returns the index of the index
+                                        ; of its decomposition sequence if it has one, else returns #f.
 
-(define (sv-decomposition-index-of-index s)
-  (let ((index
-         (if (< s 65536)
-             (binary-search-16bit s decomposition-chars-16bit)
-             (let ((index0 (binary-search s decomposition-chars-morebits)))
-               (if index0
+    (define (sv-decomposition-index-of-index s)
+      (let ((index
+             (if (< s 65536)
+               (binary-search-16bit s decomposition-chars-16bit)
+               (let ((index0 (binary-search s decomposition-chars-morebits)))
+                 (if index0
                    (+ index0
                       (euclidean-quotient (bytevector-length decomposition-chars-16bit)
-                           2))
+                                          2))
                    index0)))))
-    (if index
-        (+ index index)
-        #f)))
+        (if index
+          (+ index index)
+          #f)))
 
-; Given the index of the index of a decomposition sequence,
-; returns two values: the starting index (inclusive) and
-; ending index (exclusive) of its decomposition sequence.
+                                        ; Given the index of the index of a decomposition sequence,
+                                        ; returns two values: the starting index (inclusive) and
+                                        ; ending index (exclusive) of its decomposition sequence.
 
-(define (sv-decomposition-sequence-range index)
-  (define (decode hi lo)
-    (+ (* 256 (if (< hi 128) hi (- hi 128))) lo))
-  (let* ((hi0 (bytevector-u8-ref decomposition-indexes index))
-         (lo0 (bytevector-u8-ref decomposition-indexes (+ index 1)))
-         (hi1 (bytevector-u8-ref decomposition-indexes (+ index 2)))
-         (lo1 (bytevector-u8-ref decomposition-indexes (+ index 3))))
-    (values (decode hi0 lo0)
-            (decode hi1 lo1))))
+    (define (sv-decomposition-sequence-range index)
+      (define (decode hi lo)
+        (+ (* 256 (if (< hi 128) hi (- hi 128))) lo))
+      (let* ((hi0 (bytevector-u8-ref decomposition-indexes index))
+             (lo0 (bytevector-u8-ref decomposition-indexes (+ index 1)))
+             (hi1 (bytevector-u8-ref decomposition-indexes (+ index 2)))
+             (lo1 (bytevector-u8-ref decomposition-indexes (+ index 3))))
+        (values (decode hi0 lo0)
+                (decode hi1 lo1))))
 
-; The following procedures aren't used at present, but
-; might be used by some future rewrite.
-; For now, they are commented out.
+                                        ; The following procedures aren't used at present, but
+                                        ; might be used by some future rewrite.
+                                        ; For now, they are commented out.
 
-#;(begin
+    #;(begin
 
 ; Given a Unicode scalar value, returns the index of its
 ; canonical decomposition sequence if it has one, else returns #f.
