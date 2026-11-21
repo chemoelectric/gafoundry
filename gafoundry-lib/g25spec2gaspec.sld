@@ -25,11 +25,15 @@
           (scheme char)
           (scheme write)
           (scheme process-context)
-          (only (srfi 1) proper-list? append! any every)
+          (only (srfi 1)
+                drop-right take-right
+                proper-list? append!
+                any every)
           (srfi 37)
           (only (srfi 152)
                 string-drop string-every
-                string-null? string-prefix?)
+                string-null? string-prefix?
+                string-split)
           (gafoundry-lib define-record-factory)
           (gafoundry-lib match)
           (gafoundry-lib format)
@@ -41,21 +45,6 @@
   (begin
 
 ;;;---------------------------------------------------------------------
-
-;;;;;;;;;;;;    (define *vector-space-dimension*
-;;;;;;;;;;;;      (make-parameter (list #f)
-;;;;;;;;;;;;                      (lambda args (list #f))))
-;;;;;;;;;;;;
-;;;;;;;;;;;;    (define (set-vector-space-dimension! n)
-;;;;;;;;;;;;      (unless (and (exact-integer? n) (positive? n))
-;;;;;;;;;;;;        (error "expected an exact positive integer" n))
-;;;;;;;;;;;;      (set-car! (*vector-space-dimension*) n))
-;;;;;;;;;;;;
-;;;;;;;;;;;;    (define (vector-space-dimension)
-;;;;;;;;;;;;      (let ((n (car (*vector-space-dimension*))))
-;;;;;;;;;;;;        (unless n
-;;;;;;;;;;;;          (error "vector space dimension has not been set"))
-;;;;;;;;;;;;        n))
 
     (define (check-string . strlst)
       (lambda (str)
@@ -99,6 +88,11 @@
          `((basis-vector-names ,(basicVectorNames->gaspec
                                  basisVectorNames-attributes))
            . ,(g25spec->gaspec sxml)))
+        (`((metric (@ . ,metric-attributes) . ,metric-elements)
+           . ,sxml)
+         `((metric . ,(metric->gaspec metric-attributes
+                                      metric-elements))
+           . ,(g25spec->gaspec sxml)))
         (fixme fixme)))
 
     (define g25spec-attribute->gaspec
@@ -118,7 +112,6 @@
            (unless (and (exact-integer? n)
                         (positive? n))
              (error "dimension must be an exact positive integer" n))
-;;;;;;;;;;           (set-vector-space-dimension! n)
            `(dimension ,n)))
         (`(testSuite ,(? string? str))
          `(test-suite ,(g25bool->boolean str)))
@@ -181,6 +174,33 @@
                  (value (cadr (assq key attributes))))
             (set-cdr! p (list value))))
         (cdr lst)))
+
+    (define (metric->gaspec metric-attributes metric-elements)
+      (let* ((lst (list #f))
+             (p lst))
+        (define (put! entry)
+          (set-cdr! p (list entry))
+          (set! p (cdr p)))
+        (define put-attribute!
+          (match-lambda
+            (`(name ,(? string? str))
+             (put! `(name ,str)))
+            (`(round ,(? string? str))
+             (put! `(round ,(g25bool->boolean str))))))
+        (define (put-element! elem)
+          (let* ((parts (string-split elem "=" 'strict-infix))
+                 (pairs (map (lambda (s)
+                               (string-split s "." 'strict-infix))
+                             (drop-right parts 1)))
+                 (value (car (take-right parts 1))))
+            ;;
+            ;; “sp” for the scalar product.
+            ;;
+            (put! `(sp ,@pairs ,value))))
+        (for-each put-attribute! metric-attributes)
+        (for-each put-element! metric-elements)
+        (cdr lst)))
+        
 
 ;;;---------------------------------------------------------------------
 
