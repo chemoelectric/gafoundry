@@ -37,6 +37,8 @@
               gafoundry-lib.uc-string))
   (extension gafoundry-lib.match
              (source "gafoundry-lib/match.sld"))
+  (extension gafoundry-lib.icon
+             (source "gafoundry-lib/icon.sld"))
   (extension gafoundry-lib.uc-string
              (source "gafoundry-lib/uc-string.sld")
              (component-dependencies
