@@ -6,3 +6,5 @@
 
 ^.+\.(build|install)\.sh$
 ^gafoundry-lib\..*\.(c|o|so|link|import.scm)$
+
+^g25spec2gaspec$

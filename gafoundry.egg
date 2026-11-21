@@ -6,7 +6,8 @@
  (dependencies (chicken "6.0.0")
                srfi-1
                srfi-37
-               srfi-141)
+               srfi-141
+               srfi-152)
  (test-dependencies scsh-process
                     test)
  (component-options
@@ -37,8 +38,6 @@
               gafoundry-lib.uc-string))
   (extension gafoundry-lib.match
              (source "gafoundry-lib/match.sld"))
-  (extension gafoundry-lib.icon
-             (source "gafoundry-lib/icon.sld"))
   (extension gafoundry-lib.uc-string
              (source "gafoundry-lib/uc-string.sld")
              (component-dependencies

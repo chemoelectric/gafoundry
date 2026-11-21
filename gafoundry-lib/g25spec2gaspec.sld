@@ -27,6 +27,9 @@
           (scheme process-context)
           (only (srfi 1) proper-list? append! any every)
           (srfi 37)
+          (only (srfi 152)
+                string-drop string-every
+                string-null? string-prefix?)
           (gafoundry-lib define-record-factory)
           (gafoundry-lib match)
           (gafoundry-lib format)
@@ -38,6 +41,21 @@
   (begin
 
 ;;;---------------------------------------------------------------------
+
+;;;;;;;;;;;;    (define *vector-space-dimension*
+;;;;;;;;;;;;      (make-parameter (list #f)
+;;;;;;;;;;;;                      (lambda args (list #f))))
+;;;;;;;;;;;;
+;;;;;;;;;;;;    (define (set-vector-space-dimension! n)
+;;;;;;;;;;;;      (unless (and (exact-integer? n) (positive? n))
+;;;;;;;;;;;;        (error "expected an exact positive integer" n))
+;;;;;;;;;;;;      (set-car! (*vector-space-dimension*) n))
+;;;;;;;;;;;;
+;;;;;;;;;;;;    (define (vector-space-dimension)
+;;;;;;;;;;;;      (let ((n (car (*vector-space-dimension*))))
+;;;;;;;;;;;;        (unless n
+;;;;;;;;;;;;          (error "vector space dimension has not been set"))
+;;;;;;;;;;;;        n))
 
     (define (check-string . strlst)
       (lambda (str)
@@ -69,6 +87,18 @@
         (`((@ . ,g25spec-attributes) . ,sxml)
          `(,@(map g25spec-attribute->gaspec g25spec-attributes)
            . ,(g25spec->gaspec sxml)))
+        (`((inline (@ . ,inline-attributes)) . ,sxml)
+         `((inline ,@(map inline-attribute->gaspec inline-attributes))
+           . ,(g25spec->gaspec sxml)))
+        (`((floatType (@ . ,floatType-attributes)) . ,sxml)
+         `((float-type ,@(map floatType-attribute->gaspec
+                              floatType-attributes))
+           . ,(g25spec->gaspec sxml)))
+        (`((basisVectorNames (@ . ,basisVectorNames-attributes))
+           . ,sxml)
+         `((basis-vector-names ,(basicVectorNames->gaspec
+                                 basisVectorNames-attributes))
+           . ,(g25spec->gaspec sxml)))
         (fixme fixme)))
 
     (define g25spec-attribute->gaspec
@@ -88,6 +118,7 @@
            (unless (and (exact-integer? n)
                         (positive? n))
              (error "dimension must be an exact positive integer" n))
+;;;;;;;;;;           (set-vector-space-dimension! n)
            `(dimension ,n)))
         (`(testSuite ,(? string? str))
          `(test-suite ,(g25bool->boolean str)))
@@ -99,6 +130,57 @@
          `(parser ,((check-string "none" "builtin" "antlr") str)))
         (`(copyright ,(? string? str))
          `(copyright ,str))))
+
+    (define inline-attribute->gaspec
+      (match-lambda
+        (`(constructors ,(? string? str))
+         `(constructors ,(g25bool->boolean str)))
+        (`(set ,(? string? str))
+         `(set ,(g25bool->boolean str)))
+        (`(assign ,(? string? str))
+         `(assign ,(g25bool->boolean str)))
+        (`(operators ,(? string? str))
+         `(operators ,(g25bool->boolean str)))
+        (`(functions ,(? string? str))
+         `(functions ,(g25bool->boolean str)))))
+
+    (define floatType-attribute->gaspec
+      (match-lambda
+        (`(type ,(? string? str))
+         `(type ,str))
+        (`(suffix ,(? string? str))
+         `(suffix ,str))
+        (`(prefix ,(? string? str))
+         `(prefix ,str))))
+
+    (define (find-max-vector-name-number attributes)
+      (let ((keys (map symbol->string (map car attributes))))
+        (unless (every (lambda (s) (string-prefix? "name" s)) keys)
+          (error "expected only attributes starting with “name”" keys))
+        (let ((numbers (map (lambda (s) (string-drop s 4)) keys)))
+          (unless (every (lambda (s)
+                           (and (not (string-null? s))
+                                (string-every char-numeric? s)))
+                         numbers))
+          (let* ((numbers (map string->number numbers))
+                 (imin (apply min numbers))
+                 (imax (apply max numbers)))
+            (unless (= 1 imin)
+              (error "expected the basis vectors to \
+                      start with “name1”"))
+            imax))))
+
+    (define (basicVectorNames->gaspec attributes)
+      (let ((n (find-max-vector-name-number attributes))
+            (lst (list #f)))
+        (do ((i 1 (+ i 1))
+             (p lst (cdr p)))
+            ((= i (+ n 1)))
+          (let* ((key (string->symbol
+                       (string-append "name" (number->string i))))
+                 (value (cadr (assq key attributes))))
+            (set-cdr! p (list value))))
+        (cdr lst)))
 
 ;;;---------------------------------------------------------------------
 
