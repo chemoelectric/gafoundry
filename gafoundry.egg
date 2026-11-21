@@ -38,6 +38,12 @@
               gafoundry-lib.uc-string))
   (extension gafoundry-lib.match
              (source "gafoundry-lib/match.sld"))
+  (extension gafoundry-lib.snobol-match
+             (source "gafoundry-lib/snobol-match.sld")
+             (component-dependencies gafoundry-lib.uc-string))
+  (extension gafoundry-lib.snobol-char-set
+             (source "gafoundry-lib/snobol-char-set.sld")
+             (component-dependencies gafoundry-lib.uc-string))
   (extension gafoundry-lib.uc-string
              (source "gafoundry-lib/uc-string.sld")
              (component-dependencies

@@ -3,6 +3,8 @@
 
 ^README\.html$
 ^salmonella.log$
+^TestG25$
+^e9ga_c_9xVxGA_x_x_Ymv_1d_libc_scalar\.xml$
 
 ^.+\.(build|install)\.sh$
 ^gafoundry-lib\..*\.(c|o|so|link|import.scm)$

@@ -53,6 +53,8 @@ LIBRARY_SRC = \
 		gafoundry-lib/xml-parse.sld \
 		gafoundry-lib/format.sld \
 		gafoundry-lib/match.sld \
+		gafoundry-lib/snobol-match.sld \
+		gafoundry-lib/snobol-char-set.sld \
 		gafoundry-lib/uc-string.sld \
 		gafoundry-lib/co-expression.sld \
 		gafoundry-lib/define-record-factory.sld
