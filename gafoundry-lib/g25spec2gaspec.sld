@@ -124,6 +124,85 @@
             (put! (uc-string->string value)))
           (cdr lst)))
 
+      (define (parse-basis-blades-spec str)
+        (let* ((str^ (uc-string-append (->uc-string str)
+                                       (uc-string #\null)))
+               (lst (list #f))
+               (put! (put!-procedure lst)))
+          (let loop ()
+            (cond
+              ((snobol-match
+                (p:seq
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:assign-local
+                  (p:alt
+                   (p:lit (uc-string #\null))
+                   (p:lit (string->uc-string "scalar"))
+                   (p:seq
+                    (p:maybe-many
+                     (p:seq                      
+                      (apply p:alt (map p:lit basis-vector-names))
+                      (p:maybe-many
+                       (p:span-char-set char-set:whitespace))
+                      (p:lit (uc-string #\^))
+                      (p:maybe-many
+                       (p:span-char-set char-set:whitespace))))
+                    (apply p:alt (map p:lit basis-vector-names))))
+                  'basis-blade))
+                str^) =>
+                (lambda (match-result)
+                  (let ((blade (getvar 'basis-blade match-result)))
+                    (unless (uc-string=? blade (uc-string #\null))
+                      (put! (parse-one-basis-blade blade))
+                      (uc-string-resize! str^ (car match-result))
+                      (loop)))))
+              (else
+               (error "unparseable basis blade spec"
+                      (uc-string->string (->uc-string str))))))
+          (cdr lst)))
+
+      (define (parse-one-basis-blade str)
+        (let* ((str^ (uc-string-append str (uc-string #\null)))
+               (lst (list #f))
+               (put! (put!-procedure lst))
+               (vec-names (cons (string->uc-string "scalar")
+                                basis-vector-names)))
+          (let loop ()
+            (cond
+              ((snobol-match
+                (p:seq
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:seq
+                  (p:assign-local
+                   (apply p:alt (map p:lit vec-names))
+                   'vec-name)
+                  (p:maybe-many
+                   (p:span-char-set char-set:whitespace))
+                  (p:lit (uc-string #\^))
+                  (p:maybe-many
+                   (p:span-char-set char-set:whitespace))))
+                str^) =>
+                (lambda (match-result)
+                  (put! (uc-string->symbol
+                         (getvar 'vec-name match-result)))
+                  (uc-string-resize! str^ (car match-result))
+                  (loop)))))
+          (let ((match-result
+                 (snobol-match
+                  (p:seq
+                   (p:assign-local
+                    (apply p:alt (map p:lit vec-names))
+                    'vec-name)
+                   (p:maybe-many
+                    (p:span-char-set char-set:whitespace))
+                   (p:lit (uc-string #\null)))
+                  str^)))
+            (put! (uc-string->symbol
+                   (getvar 'vec-name match-result))))
+          (if (equal? (cdr lst) '(scalar))
+            'scalar
+            (cdr lst))))
+
       (define (check-string . strlst)
         (lambda (str)
           (unless (any (lambda (s) (string=? s str)) strlst)
@@ -342,6 +421,7 @@
             'FIXME)
           (define (put-mv-elements-by-group!)
             'FIXME)
+;;;;;;;          (format #t "~Y" (parse-basis-blades-spec "scalar e1^e2^e3 e2 e3 ^ e1 ^ e2  e3 "));;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
           (for-each put-attribute! mv-attributes)
           (when (eq? coord-order 'custom)
             (put-mv-elements!))
