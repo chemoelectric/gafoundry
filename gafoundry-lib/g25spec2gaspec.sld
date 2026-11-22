@@ -51,10 +51,24 @@
 
 ;;;---------------------------------------------------------------------
 
+    (define (put!-procedure lst)
+      (let ((p lst))
+        (lambda (entry)
+          (set-cdr! p (list entry))
+          (set! p (cdr p)))))
+
     (define (getvar key match-result)
       (and match-result
            (let ((p (assoc key (cdr match-result))))
              (and p (cdr p)))))
+
+    (define (->uc-string obj)
+      (cond ((uc-string? obj) obj)
+            ((string? obj) (string->uc-string obj))
+            ((symbol? obj) (symbol->uc-string obj))
+            ((number? obj) (number->uc-string obj))
+            (else
+             (error "->uc-string: object type not implemented" obj))))
 
 ;;;---------------------------------------------------------------------
 
@@ -63,32 +77,52 @@
       (define dimension #f)
       (define basis-vector-names #f)
 
-      (define (match-basis-vector str)
-        (let loop ((lst basis-vector-names))
-          (cond ((null? lst) #f)
-                ((snobol-match
-                  (p:seq
-                   (p:maybe-many (p:span-char-set char-set:whitespace))
-                   (p:assign-local (p:lit (car lst)) 'vector-name)
-                   (p:alt
-                    (p:seq
-                     (p:maybe-many
-                      (p:span-char-set char-set:whitespace))
-                     (p:assign-local
-                      (p:alt
-                       (p:lit ".")
-                       (p:lit "^")
-                       (p:lit "=")
-                       (p:lit "\x0;"))
-                      'operator))
+      (define (parse-metric-spec str)
+        (let* ((str^ (uc-string-append (->uc-string str)
+                                       (uc-string #\null)))
+               (lst (list #f))
+               (put! (put!-procedure lst)))
+          (let loop ()
+            (cond
+              ((snobol-match
+                (p:seq
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:assign-local
+                  (apply p:alt (map p:lit basis-vector-names))
+                  'left)
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:lit (uc-string #\.))
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:assign-local
+                  (apply p:alt (map p:lit basis-vector-names))
+                  'right)
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:lit (uc-string #\=)))
+                str^) =>
+                (lambda (match-result)
+                  (let ((left-vec (getvar 'left match-result))
+                        (right-vec (getvar 'right match-result)))
+                    (put! (list (uc-string->symbol left-vec)
+                                (uc-string->symbol right-vec))))
+                  (uc-string-resize! str^ (car match-result))
+                  (loop)))))
+          (unless (positive? (length (cdr lst)))
+            (error "no metric entries in spec string" str))
+          (let* ((match-result
+                  (snobol-match
+                   (p:seq
+                    (p:maybe-many (p:span-char-set char-set:whitespace))
                     (p:assign-local
-                     (p:span-char-set char-set:whitespace)
-                     'operator)))
-                  str) =>
-                  (lambda (match-result)
-                    (values (getvar 'vector-name match-result)
-                            (getvar 'operator match-result))))
-                (else (loop (cdr lst))))))
+                     (p:many (p:notany (uc-string #\null)))
+                     'value))
+                   str^))
+                 (value (uc-string-trim-right
+                         (getvar 'value match-result))))
+            (when (uc-string-any (lambda (ch) (char=? ch #\=)) value)
+              (error "very unlikely metric value"
+                     (uc-string->string value)))
+            (put! (uc-string->string value)))
+          (cdr lst)))
 
       (define (check-string . strlst)
         (lambda (str)
@@ -125,7 +159,6 @@
           (`((@ . ,g25spec-attributes) . ,g25spec-elements)
            (set-dimension! g25spec-attributes)
            (set-basis-vector-names! g25spec-elements)
-;;;;;;           (let-values (((x y) (match-basis-vector (string->uc-string "  e1   e2"))))(format #t "~y ~y" x y));;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            `(,@(map g25spec-attribute->gaspec g25spec-attributes)
              . ,(map g25spec-element->gaspec g25spec-elements)))))
 
@@ -238,10 +271,7 @@
 
       (define (metric->gaspec metric-attributes metric-elements)
         (let* ((lst (list #f))
-               (p lst))
-          (define (put! entry)
-            (set-cdr! p (list entry))
-            (set! p (cdr p)))
+               (put! (put!-procedure lst)))
           (define put-attribute!
             (match-lambda
               (`(name ,(? string? str))
@@ -249,19 +279,10 @@
               (`(round ,(? string? str))
                (put! `(round ,(g25bool->boolean str))))))
           (define (put-element! elem)
-            (let* ((parts (string-split elem "=" 'strict-infix))
-                   (pairs (map (lambda (s)
-                                 (map string->symbol
-                                      (map string-trim-both
-                                           (string-split
-                                            s "." 'strict-infix))))
-                               (drop-right parts 1)))
-                   (value (string-trim-both
-                           (car (take-right parts 1)))))
-              ;;
-              ;; “sp” for the scalar product.
-              ;;
-              (put! `(sp ,@pairs ,value))))
+            ;;
+            ;; “sp” for the scalar product.
+            ;;
+            (put! `(sp . ,(parse-metric-spec elem))))
           (for-each put-attribute! metric-attributes)
           (for-each put-element! metric-elements)
           (cdr lst)))
