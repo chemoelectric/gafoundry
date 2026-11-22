@@ -30,6 +30,7 @@
                 drop-right take-right
                 proper-list? append!
                 any every)
+          (srfi 14)
           (srfi 37)
           (only (srfi 152)
                 string-drop string-every
@@ -39,7 +40,10 @@
           (gafoundry-lib match)
           (gafoundry-lib format)
           (gafoundry-lib version)
-          (gafoundry-lib xml-parse))
+          (gafoundry-lib xml-parse)
+          (gafoundry-lib uc-string)
+          (gafoundry-lib snobol-match)
+          (gafoundry-lib snobol-char-set))
 
   (export g25spec2gaspec)
 
@@ -47,10 +51,44 @@
 
 ;;;---------------------------------------------------------------------
 
+    (define (getvar key match-result)
+      (and match-result
+           (let ((p (assoc key (cdr match-result))))
+             (and p (cdr p)))))
+
+;;;---------------------------------------------------------------------
+
     (define (sxml->gaspec sxml)
 
       (define dimension #f)
       (define basis-vector-names #f)
+
+      (define (match-basis-vector str)
+        (let loop ((lst basis-vector-names))
+          (cond ((null? lst) #f)
+                ((snobol-match
+                  (p:seq
+                   (p:maybe-many (p:span-char-set char-set:whitespace))
+                   (p:assign-local (p:lit (car lst)) 'vector-name)
+                   (p:alt
+                    (p:seq
+                     (p:maybe-many
+                      (p:span-char-set char-set:whitespace))
+                     (p:assign-local
+                      (p:alt
+                       (p:lit ".")
+                       (p:lit "^")
+                       (p:lit "=")
+                       (p:lit "\x0;"))
+                      'operator))
+                    (p:assign-local
+                     (p:span-char-set char-set:whitespace)
+                     'operator)))
+                  str) =>
+                  (lambda (match-result)
+                    (values (getvar 'vector-name match-result)
+                            (getvar 'operator match-result))))
+                (else (loop (cdr lst))))))
 
       (define (check-string . strlst)
         (lambda (str)
@@ -87,6 +125,7 @@
           (`((@ . ,g25spec-attributes) . ,g25spec-elements)
            (set-dimension! g25spec-attributes)
            (set-basis-vector-names! g25spec-elements)
+;;;;;;           (let-values (((x y) (match-basis-vector (string->uc-string "  e1   e2"))))(format #t "~y ~y" x y));;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            `(,@(map g25spec-attribute->gaspec g25spec-attributes)
              . ,(map g25spec-element->gaspec g25spec-elements)))))
 
@@ -104,8 +143,9 @@
           (unless (and basisVectorNames-attributes
                        (eq? '@ (caadr basisVectorNames-attributes))))
           (set! basis-vector-names
-            (basisVectorNames->gaspec
-             (cdadr basisVectorNames-attributes)))))
+            (map symbol->uc-string
+                 (basisVectorNames->gaspec
+                  (cdadr basisVectorNames-attributes))))))
 
       (define g25spec-element->gaspec
         (match-lambda

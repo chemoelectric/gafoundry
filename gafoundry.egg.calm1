@@ -5,6 +5,7 @@
  (category math)
  (dependencies (chicken "6.0.0")
                srfi-1
+               srfi-14
                srfi-37
                srfi-141
                srfi-152)
@@ -25,7 +26,9 @@
               gafoundry-lib.format
               gafoundry-lib.match
               gafoundry-lib.version
-              gafoundry-lib.xml-parse))
+              gafoundry-lib.xml-parse
+              gafoundry-lib.snobol-match
+              gafoundry-lib.snobol-char-set))
   (extension gafoundry-lib.version
              (source "gafoundry-lib/version.sld")
              (component-dependencies
