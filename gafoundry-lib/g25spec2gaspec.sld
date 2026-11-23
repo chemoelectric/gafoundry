@@ -124,7 +124,7 @@
             (put! (uc-string->string value)))
           (cdr lst)))
 
-      (define (parse-basis-blades-spec str)
+      (define (parse-mv-basis-blades str)
         (let* ((str^ (uc-string-append (->uc-string str)
                                        (uc-string #\null)))
                (lst (list #f))
@@ -157,7 +157,65 @@
                       (uc-string-resize! str^ (car match-result))
                       (loop)))))
               (else
-               (error "unparseable basis blade spec"
+               (error "unparseable mv basis blade spec"
+                      (uc-string->string (->uc-string str))))))
+          (cdr lst)))
+
+      (define (parse-smv-basis-blades str)
+        (let* ((str^ (uc-string-append (->uc-string str)
+                                       (uc-string #\null)))
+               (lst (list #f))
+               (put! (put!-procedure lst)))
+          (let loop ()
+            (cond
+              ((snobol-match
+                (p:seq
+                 (p:maybe-many (p:span-char-set char-set:whitespace))
+                 (p:assign-local
+                  (p:alt
+                   (p:lit (uc-string #\null))
+                   (p:lit (string->uc-string "scalar"))
+                   (p:seq
+                    (p:maybe-many
+                     (p:seq                      
+                      (apply p:alt (map p:lit basis-vector-names))
+                      (p:maybe-many
+                       (p:span-char-set char-set:whitespace))
+                      (p:lit (uc-string #\^))
+                      (p:maybe-many
+                       (p:span-char-set char-set:whitespace))))
+                    (apply p:alt (map p:lit basis-vector-names))))
+                  'basis-blade)
+                 (p:alt
+                  (p:seq
+                   (p:maybe-many
+                    (p:span-char-set char-set:whitespace))
+                   (p:lit (uc-string #\=))
+                   (p:maybe-many
+                    (p:span-char-set char-set:whitespace))
+                   (p:assign-local
+                    (p:many (p:span-char-set char-set:graphic))
+                    'value))
+                  (lambda (str idx env succeed fail)
+                    ;;
+                    ;; Succeed unconditionally. (FIXME FIXME FIXME
+                    ;; FIXME FIXME: Make this a “p:maybe”
+                    ;; combinator.)
+                    ;;
+                    (succeed idx env fail))))
+                str^) =>
+                (lambda (match-result)
+                  (let ((blade (getvar 'basis-blade match-result))
+                        (value (getvar 'value match-result)))
+                    (unless (uc-string=? blade (uc-string #\null))
+                      (if value
+                        (put! `(,(parse-one-basis-blade blade)
+                                ,(uc-string->string value)))
+                        (put! (parse-one-basis-blade blade)))
+                      (uc-string-resize! str^ (car match-result))
+                      (loop)))))
+              (else
+               (error "unparseable smv basis blade spec"
                       (uc-string->string (->uc-string str))))))
           (cdr lst)))
 
@@ -280,6 +338,8 @@
                                     binaryOperator-attributes)))
           (`(mv (@ . ,mv-attributes) . ,mv-elements)
            `(mv . ,(mv->gaspec mv-attributes mv-elements)))
+          (`(smv (@ . ,smv-attributes) . ,smv-elements)
+           `(smv . ,(smv->gaspec smv-attributes smv-elements)))
           (fixme
            fixme)))
 
@@ -384,13 +444,10 @@
 
       (define (mv->gaspec mv-attributes mv-elements)
         (let* ((lst (list #f))
-               (p lst)
+               (put! (put!-procedure lst))
                (compress 'by-grade)
                (coord-order 'default)
                (mem-alloc 'full))
-          (define (put! entry)
-            (set-cdr! p (list entry))
-            (set! p (cdr p)))
           (define put-attribute!
             (match-lambda
               (`(name ,(? string? str))
@@ -418,18 +475,34 @@
               ((by-group) (put-mv-elements-by-group!))
               (else (error "internal error: unexpected branch"))))
           (define (put-mv-elements-by-grade!)
-            (put! `(blades . ,(parse-basis-blades-spec
+            (put! `(blades . ,(parse-mv-basis-blades
                                (apply string-append mv-elements)))))
           (define (put-mv-elements-by-group!)
             (put! `(blades . ,(map group->gaspec mv-elements))))
           (define group->gaspec
             (match-lambda
               (`(group . ,elements)
-               `(group . ,(parse-basis-blades-spec
+               `(group . ,(parse-mv-basis-blades
                            (apply string-append elements))))))
           (for-each put-attribute! mv-attributes)
           (when (eq? coord-order 'custom)
             (put-mv-elements!))
+          (cdr lst)))
+
+      (define (smv->gaspec smv-attributes smv-elements)
+        (let* ((lst (list #f))
+               (put! (put!-procedure lst)))
+          (define put-attribute!
+            (match-lambda
+              (`(name ,(? string? str))
+               (put! `(name ,str)))
+              (`(const ,(? string? str))
+               (put! `(const ,(g25bool->boolean str))))
+              (`(type ,(? string? str))
+               (put! `(type ,str)))))
+          (for-each put-attribute! smv-attributes)
+          (put! `(blades . ,(parse-smv-basis-blades
+                             (apply string-append smv-elements))))
           (cdr lst)))
 
       (sxml->gaspec--entry-point sxml)
