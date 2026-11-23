@@ -113,6 +113,15 @@
                  (car (snobol-match (p:maybe-many (p:lit "xyz"))
                                     (->uc "abcdef"))))
 
+  (assert-equal? "p:maybe wrapping an empty literal"
+                 0
+                 (car (snobol-match (p:maybe (p:lit ""))
+                                    (->uc "abc"))))
+
+  (assert-equal? "p:maybe when matching pattern is entirely absent"
+                 0
+                 (car (snobol-match (p:maybe (p:lit "xyz"))
+                                    (->uc "abcdef"))))
 
   ;; ====================================================================
   ;; 2. BACKTRACKING BOUNDARY OVERLAPS & PEEL-BACKS

@@ -58,6 +58,7 @@
           p:none-of
           p:many
           p:maybe-many
+          p:maybe
           p:fence
           p:abort
           p:pos
@@ -637,6 +638,12 @@
     ;; found.
     (define (p:maybe-many pat)
       (p:alt (p:many pat)
+             (lambda (str idx env succeed fail)
+               (succeed idx env fail))))
+
+    ;; Match a pattern zero times or once.
+    (define (p:maybe pat)
+      (p:alt pat
              (lambda (str idx env succeed fail)
                (succeed idx env fail))))
 

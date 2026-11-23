@@ -186,7 +186,7 @@
                        (p:span-char-set char-set:whitespace))))
                     (apply p:alt (map p:lit basis-vector-names))))
                   'basis-blade)
-                 (p:alt
+                 (p:maybe
                   (p:seq
                    (p:maybe-many
                     (p:span-char-set char-set:whitespace))
@@ -195,14 +195,7 @@
                     (p:span-char-set char-set:whitespace))
                    (p:assign-local
                     (p:many (p:span-char-set char-set:graphic))
-                    'value))
-                  (lambda (str idx env succeed fail)
-                    ;;
-                    ;; Succeed unconditionally. (FIXME FIXME FIXME
-                    ;; FIXME FIXME: Make this a “p:maybe”
-                    ;; combinator.)
-                    ;;
-                    (succeed idx env fail))))
+                    'value))))
                 str^) =>
                 (lambda (match-result)
                   (let ((blade (getvar 'basis-blade match-result))
