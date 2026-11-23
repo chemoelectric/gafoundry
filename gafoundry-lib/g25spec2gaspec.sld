@@ -29,7 +29,7 @@
           (only (srfi 1)
                 drop-right take-right
                 proper-list? append!
-                any every)
+                any every filter)
           (srfi 14)
           (srfi 37)
           (only (srfi 152)
@@ -340,6 +340,9 @@
            `(mv . ,(mv->gaspec mv-attributes mv-elements)))
           (`(smv (@ . ,smv-attributes) . ,smv-elements)
            `(smv . ,(smv->gaspec smv-attributes smv-elements)))
+          (`(constant (@ . ,constant-attributes) . ,constant-elements)
+           `(constant . ,(constant->gaspec constant-attributes
+                                           constant-elements)))
           (fixme
            fixme)))
 
@@ -503,6 +506,27 @@
           (for-each put-attribute! smv-attributes)
           (put! `(blades . ,(parse-smv-basis-blades
                              (apply string-append smv-elements))))
+          (cdr lst)))
+
+      (define (constant->gaspec constant-attributes constant-elements)
+        (let* ((lst (list #f))
+               (put! (put!-procedure lst))
+               (comment-elements (filter pair? constant-elements))
+               (const-elements (filter string? constant-elements)))
+          (define put-attribute!
+            (match-lambda
+              (`(name ,(? string? str))
+               (put! `(name ,str)))
+              (`(type ,(? string? str))
+               (put! `(type ,str)))))
+          (for-each put-attribute! constant-attributes)
+          (put! `(blades . ,(parse-smv-basis-blades
+                             (apply string-append const-elements))))
+          (for-each
+           (match-lambda
+             (`(comment ,(? string? str))
+              (put! `(comment ,str))))
+           comment-elements)
           (cdr lst)))
 
       (sxml->gaspec--entry-point sxml)
