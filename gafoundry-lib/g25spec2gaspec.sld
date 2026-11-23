@@ -418,10 +418,15 @@
               ((by-group) (put-mv-elements-by-group!))
               (else (error "internal error: unexpected branch"))))
           (define (put-mv-elements-by-grade!)
-            'FIXME)
+            (put! `(blades . ,(parse-basis-blades-spec
+                               (apply string-append mv-elements)))))
           (define (put-mv-elements-by-group!)
-            'FIXME)
-;;;;;;;          (format #t "~Y" (parse-basis-blades-spec "scalar e1^e2^e3 e2 e3 ^ e1 ^ e2  e3 "));;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+            (put! `(blades . ,(map group->gaspec mv-elements))))
+          (define group->gaspec
+            (match-lambda
+              (`(group . ,elements)
+               `(group . ,(parse-basis-blades-spec
+                           (apply string-append elements))))))
           (for-each put-attribute! mv-attributes)
           (when (eq? coord-order 'custom)
             (put-mv-elements!))
