@@ -51,6 +51,18 @@
 
 ;;;---------------------------------------------------------------------
 
+    (define (concatenate-string-elements elements)
+      (apply string-append (filter string? elements)))
+
+    (define (put-comments!-procedure put!)
+      (lambda (elements)
+        (for-each
+         (match-lambda
+           (`(comment ,(? string? str))
+            (put! `(comment ,str)))
+           (otherwise (if #f #f)))
+         elements)))
+
     (define (put!-procedure lst)
       (let ((p lst))
         (lambda (entry)
@@ -336,6 +348,8 @@
           (`(constant (@ . ,constant-attributes) . ,constant-elements)
            `(constant . ,(constant->gaspec constant-attributes
                                            constant-elements)))
+          (`(om (@ . ,om-attributes) . ,om-elements)
+           `(om . ,(om->gaspec om-attributes om-elements)))
           (fixme
            fixme)))
 
@@ -472,14 +486,15 @@
               (else (error "internal error: unexpected branch"))))
           (define (put-mv-elements-by-grade!)
             (put! `(blades . ,(parse-mv-basis-blades
-                               (apply string-append mv-elements)))))
+                               (concatenate-string-elements
+                                mv-elements)))))
           (define (put-mv-elements-by-group!)
             (put! `(blades . ,(map group->gaspec mv-elements))))
           (define group->gaspec
             (match-lambda
               (`(group . ,elements)
                `(group . ,(parse-mv-basis-blades
-                           (apply string-append elements))))))
+                           (concatenate-string-elements elements))))))
           (for-each put-attribute! mv-attributes)
           (when (eq? coord-order 'custom)
             (put-mv-elements!))
@@ -498,14 +513,14 @@
                (put! `(type ,str)))))
           (for-each put-attribute! smv-attributes)
           (put! `(blades . ,(parse-smv-basis-blades
-                             (apply string-append smv-elements))))
+                             (concatenate-string-elements
+                              smv-elements))))
           (cdr lst)))
 
       (define (constant->gaspec constant-attributes constant-elements)
         (let* ((lst (list #f))
                (put! (put!-procedure lst))
-               (comment-elements (filter pair? constant-elements))
-               (const-elements (filter string? constant-elements)))
+               (put-comments! (put-comments!-procedure put!)))
           (define put-attribute!
             (match-lambda
               (`(name ,(? string? str))
@@ -514,12 +529,38 @@
                (put! `(type ,str)))))
           (for-each put-attribute! constant-attributes)
           (put! `(blades . ,(parse-smv-basis-blades
-                             (apply string-append const-elements))))
-          (for-each
-           (match-lambda
-             (`(comment ,(? string? str))
-              (put! `(comment ,str))))
-           comment-elements)
+                             (concatenate-string-elements
+                              constant-elements))))
+          (put-comments! constant-elements)
+          (cdr lst)))
+
+      (define (om->gaspec om-attributes om-elements)
+        (let* ((lst (list #f))
+               (put! (put!-procedure lst))
+               (name "<unknown>")
+               (coord-order 'defavult))
+          (define put-attribute!
+            (match-lambda
+              (`(name ,(? string? str))
+               (set! name str)
+               (put! `(name ,str)))
+              (`(coordinateOrder ,(? string? str))
+               (set! coord-order ((check-symbol "default" "custom")
+                                  str))
+               (put! `(coordinate-order ,coord-order)))))
+          (for-each put-attribute! om-attributes)
+          (when (eq? coord-order 'custom)
+            (let ((domain (assq 'domain om-elements))
+                  (range (assq 'range om-elements)))
+              (unless domain
+                (error "domain is missing for om" name))
+              (put! `(domain . ,(parse-mv-basis-blades
+                                 (concatenate-string-elements
+                                  (cdr domain)))))
+              (when range
+                (put! `(range . ,(parse-mv-basis-blades
+                                  (concatenate-string-elements
+                                   (cdr range))))))))
           (cdr lst)))
 
       (sxml->gaspec--entry-point sxml)

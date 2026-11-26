@@ -12,7 +12,7 @@
  (test-dependencies scsh-process
                     test)
  (component-options
-  (csc-options -O2 -d1 -w))
+  (csc-options -O2 -d1))
  (components
   (program g25spec2gaspec
            (source "g25spec2gaspec.scm")
@@ -53,6 +53,8 @@
               gafoundry-lib.define-record-factory))
   (extension gafoundry-lib.co-expression
              (source "gafoundry-lib/co-expression.sld"))
+  (extension gafoundry-lib.combinators
+             (source "gafoundry-lib/combinators.sld"))
   (extension gafoundry-lib.define-record-factory
              (source "gafoundry-lib/define-record-factory.sld"))
   ))

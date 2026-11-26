@@ -1,0 +1,101 @@
+(@ dnl)  Copyright © 2026 Barry Schwartz
+(@ dnl) 
+(@ dnl)  Permission is hereby granted, free of charge, to any person
+(@ dnl)  obtaining a copy of this software and associated documentation
+(@ dnl)  files (the "Software"), to deal in the Software without
+(@ dnl)  restriction, including without limitation the rights to use, copy,
+(@ dnl)  modify, merge, publish, distribute, sublicense, and/or sell copies
+(@ dnl)  of the Software, and to permit persons to whom the Software is
+(@ dnl)  furnished to do so, subject to the following conditions: The above
+(@ dnl)  copyright notice and this permission notice shall be included in
+(@ dnl)  all copies or substantial portions of the Software.
+(@ dnl) 
+(@ dnl)  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+(@ dnl)  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+(@ dnl)  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+(@ dnl)  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+(@ dnl)  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+(@ dnl)  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+(@ dnl)  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+(@ dnl)  SOFTWARE.
+(@ dnl)
+(@ define "THRUSH-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ . f*) \
+     (syntax-rules () \
+       ((µ . val*) \
+        (thrush-syntax-aux f* val*)))))")(@ dnl)
+(@ dnl)
+(@ define "THRUSH+-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ val . f*) \
+     (let-syntax ((macro (thrush-syntax . f*))) \
+       (macro val))))")(@ dnl)
+(@ dnl)
+(@ define "THRUSH*-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ . val*) \
+     (syntax-rules () \
+       ((µ f . f*) \
+        (thrush-syntax-aux (f . f*) val*)))))")(@ dnl)
+(@ dnl)
+(@ define "CPS-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ (@ 1)) \
+     (syntax-rules () \
+       ((µ k . t*) \
+        (k ((@ 1) . t*))))))")(@ dnl)
+(@ dnl)
+(@ define "UNCPS-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ (@ 1)) \
+     (syntax-rules () \
+       ((µ . t*) \
+        (let-syntax ((identity (syntax-rules () ((ι τ) τ)))) \
+          ((@ 1) identity . t*))))))")(@ dnl)
+(@ dnl)
+(@ define "DEFINE-CPS-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ name f) \
+     (define-syntax name \
+       (@ CPS-SYNTAX \"f\"))))")(@ dnl)
+(@ dnl)
+(@ define "DEFINE-UNCPS-SYNTAX"
+  "\
+  (syntax-rules () \
+    ((¶ name f) \
+     (define-syntax name \
+       (@ UNCPS-SYNTAX \"f\"))))")(@ dnl)
+(@ dnl)
+(@ define "LAMBDA-CPS-SYNTAX~>"
+  "\
+  (syntax-rules () \
+    ((¶ . f*) \
+     (syntax-rules () \
+       ((µ k . val*) \
+        (lambda-cps-syntax~>-aux f* k val*)))))")(@ dnl)
+(@ dnl)
+(@ define "CPS-SYNTAX~>*"
+  "\
+  (syntax-rules () \
+    ((¶ k . val*) \
+     (syntax-rules () \
+       ((µ f . f*) \
+        (lambda-cps-syntax~>-aux (f . f*) k val*)))))")(@ dnl)
+(@ dnl)
+(@ define "LAMBDA-IF"
+  "\
+  (syntax-rules () \
+    ((¶ kt kf) \
+     (lambda (x) (if x kt kf))))")(@ dnl)
+(@ dnl)
+(@ dnl) local variables:
+(@ dnl) mode: scheme
+(@ dnl) coding: utf-8
+(@ dnl) end:

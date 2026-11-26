@@ -57,6 +57,7 @@ LIBRARY_SRC = \
 		gafoundry-lib/snobol-char-set.sld \
 		gafoundry-lib/uc-string.sld \
 		gafoundry-lib/co-expression.sld \
+		gafoundry-lib/combinators.sld \
 		gafoundry-lib/define-record-factory.sld
 
 all:: g25spec2gaspec
@@ -97,6 +98,10 @@ gafoundry-lib/uc-string.sld: gafoundry-lib/unicode0.body.scm
 gafoundry-lib/uc-string.sld: gafoundry-lib/unicode4.body.scm
 all:: gafoundry-lib/uc-string.sld
 maintainer-clean:: ; -rm -f gafoundry-lib/uc-string.sld
+
+gafoundry-lib/combinators.sld: gafoundry-lib/combinators-macros.calm1
+all:: gafoundry-lib/combinators.sld
+maintainer-clean:: ; -rm -f gafoundry-lib/combinators.sld
 
 .PHONY: install
 install:: g25spec2gaspec
